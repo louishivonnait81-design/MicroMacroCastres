@@ -16,6 +16,18 @@ Rendre `data/blocks.json` (fiche 004) en une image isométrique noir et blanc en
 3. Louis choisit orientation + inclinaison (voir « Constat » ci-dessous). La valeur choisie devient `ISO_TURN` / `ISO_TILT` dans le script.
 4. Rendu à la taille d'impression : 75 × 110 cm à 300 dpi ≈ 8 860 px de large (`largeur_px = 8860`) ; l'épaisseur de trait `LINE_THICKNESS` se règle ensuite à l'œil sur un tirage A4 d'un détail.
 
+## Comparateur d'angles (fiche 005 bis)
+`python3 pipeline/04_comparateur_angles.py 900` rend 20 combinaisons (orientations 0 / 10 / 20 / 30 / 45°, inclinaisons 25 / 35 / 45 / 54,7°), **chacune cadrée dans la feuille 75 × 110 portrait**, et assemble `out/angles_castres.html` : un fichier à ouvrir d'un double clic, deux curseurs, le taux de remplissage de la feuille et le tableau complet. Le mode feuille est aussi accessible directement : 6e argument de `02_build_blender.py` = largeur / hauteur de la feuille (0.682), ou `libre` pour que l'image épouse la ville.
+
+Remplissage de la feuille, en pourcentage :
+
+| inclinaison \ orientation | 0° | 10° | 20° | 30° | 45° |
+|---|---|---|---|---|---|
+| 25° | 96 | 84 | 77 | 71 | 64 |
+| 35° | 88 | 77 | 70 | 65 | 58 |
+| 45° | 77 | 68 | 62 | 57 | 51 |
+| 54,7° | 65 | 57 | 52 | 48 | 43 |
+
 ## Constat (18/09)
 La vraie isométrie (inclinaison 54,7°) écrase la profondeur d'un facteur 0,58 : le plan portrait 71 × 106 donne toujours une **image paysage** (1,6:1 à 45°, 1,3:1 à 20°). Pour remplir une feuille 75 × 110 **portrait**, il faut une vue plus plongeante : à 38° d'inclinaison et 15° d'orientation, l'image est au format 1:1,04 (presque portrait) et ressemble davantage à la carte MicroMacro (façades courtes, toits bien visibles). Trois rendus sont proposés à Louis : 45°/54,7°, 20°/54,7° et 15°/38°.
 

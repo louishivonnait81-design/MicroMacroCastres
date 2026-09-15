@@ -7,7 +7,7 @@ isométrique et Freestyle en ligne claire (noir sur blanc, sans ombre),
 puis rend un PNG.
 
 Usage (bpy installé comme module Python, ou Blender en ligne de commande) :
-  python3 pipeline/02_build_blender.py data/blocks.json out/ [largeur_px] [orientation] [inclinaison]
+  python3 pipeline/02_build_blender.py data/blocks.json out/ [largeur_px] [orientation] [inclinaison] [feuille]
   blender -b -P pipeline/02_build_blender.py -- data/blocks.json out/ 6000 45
 
 Sorties : out/castres.png, out/castres.blend (et out/castres.svg si l'add-on
@@ -280,7 +280,7 @@ def add_waves(bm, rings, z):
 # ---------------------------------------------------------------------------
 # Caméra + rendu
 # ---------------------------------------------------------------------------
-def setup_camera(scene, bounds, width_px, turn=ISO_TURN, tilt=ISO_TILT):
+def setup_camera(scene, bounds, width_px, turn=ISO_TURN, tilt=ISO_TILT, paper=None):
     x0, y0, x1, y1 = bounds
     center = Vector(((x0 + x1) / 2, (y0 + y1) / 2, 0))
     cam_data = bpy.data.cameras.new("CamIso")
@@ -305,14 +305,30 @@ def setup_camera(scene, bounds, width_px, turn=ISO_TURN, tilt=ISO_TILT):
                 xs.append(p.x)
                 ys.append(p.y)
     w, h = (max(xs) - min(xs)) * 1.04, (max(ys) - min(ys)) * 1.04
-    cam_data.ortho_scale = max(w, h)
     # recentrer la caméra sur le centre projeté
     cx, cy = (max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2
     cam.location += cam.matrix_world.to_3x3() @ Vector((cx, cy, 0))
 
-    scene.render.resolution_x = int(width_px)
-    scene.render.resolution_y = int(width_px * h / w)
+    if paper:
+        # cadre imposé (la feuille) : la ville est posée dedans, le reste est blanc
+        fw, fh = w, h
+        if fw / fh > paper:
+            fh = fw / paper
+        else:
+            fw = fh * paper
+        res_x, res_y = int(width_px), int(round(width_px / paper))
+        cam_data.ortho_scale = fh if res_y >= res_x else fw
+        fill = (w * h) / (fw * fh)
+    else:
+        res_x, res_y = int(width_px), int(round(width_px * h / w))
+        cam_data.ortho_scale = max(w, h)
+        fill = 1.0
+
+    scene.render.resolution_x = res_x
+    scene.render.resolution_y = res_y
     scene.render.resolution_percentage = 100
+    print("cadrage : ville %.3f:1, image %d × %d, remplissage %.1f %%"
+          % (w / h, res_x, res_y, 100 * fill))
 
 
 def setup_render(scene, out_dir, name="castres"):
@@ -384,6 +400,9 @@ def main():
     width_px = int(argv[2]) if len(argv) > 2 else 4000
     turn = float(argv[3]) if len(argv) > 3 else ISO_TURN
     tilt = float(argv[4]) if len(argv) > 4 else ISO_TILT
+    paper = None
+    if len(argv) > 5 and argv[5] not in ("libre", "-", ""):
+        paper = float(argv[5])   # largeur / hauteur de la feuille, ex. 75/110 = 0.682
     os.makedirs(out_dir, exist_ok=True)
 
     with open(geojson_path) as f:
@@ -443,8 +462,8 @@ def main():
     ground.name = "Sol"
     ground.data.materials.append(mat)
 
-    setup_camera(scene, data["bounds"], width_px, turn, tilt)
-    name = "castres" if (turn, tilt) == (ISO_TURN, ISO_TILT) else "castres_%03d_%02d" % (int(turn), int(tilt))
+    setup_camera(scene, data["bounds"], width_px, turn, tilt, paper)
+    name = os.environ.get("CASTRES_NAME") or ("castres" if (turn, tilt) == (ISO_TURN, ISO_TILT) else "castres_%03d_%02d" % (int(turn), int(tilt)))
     setup_render(scene, out_dir, name)
     print("Scène :", counts, "| image", scene.render.resolution_x, "×", scene.render.resolution_y, "| orientation", turn, "| inclinaison", tilt)
 
