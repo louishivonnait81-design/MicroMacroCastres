@@ -649,6 +649,95 @@ def collect(parsed, g):
     return streets, water, parks, place, jardin, features, nodes, dropped
 
 
+def parse_pois(osm_path, g):
+    """Points d'intérêt OSM (nœuds et ways avec amenity / shop / name) en cases."""
+    import xml.etree.ElementTree as ET
+    nodes, pois = {}, []
+    for _, el in ET.iterparse(osm_path, events=("end",)):
+        if el.tag == "node":
+            nodes[el.get("id")] = (float(el.get("lat")), float(el.get("lon")))
+            t = {x.get("k"): x.get("v") for x in el.findall("tag")}
+            if t.get("amenity") or t.get("shop") or t.get("name"):
+                x, y = g.cell(nodes[el.get("id")])
+                if inside(int(x), int(y)):
+                    pois.append(dict(x=int(x), y=int(y), name=t.get("name", ""), amenity=t.get("amenity", ""), shop=t.get("shop", "")))
+        elif el.tag == "way":
+            t = {x.get("k"): x.get("v") for x in el.findall("tag")}
+            if t.get("amenity") or t.get("shop"):
+                pts = [g.cell(nodes[n.get("ref")]) for n in el.findall("nd") if n.get("ref") in nodes]
+                if pts:
+                    x = sum(p[0] for p in pts) / len(pts); y = sum(p[1] for p in pts) / len(pts)
+                    if inside(int(x), int(y)):
+                        pois.append(dict(x=int(x), y=int(y), name=t.get("name", ""), amenity=t.get("amenity", ""), shop=t.get("shop", "")))
+        if el.tag in ("node", "way", "relation"):
+            el.clear()
+    return pois
+
+
+def story_labels(pois, grid, monuments, place_rect, say):
+    """Les dix lieux à histoires de DECISIONS.md : d'après les noms OSM quand
+    ils existent, sinon à l'endroit le plus plausible (signalé « deviné »)."""
+    out = []
+
+    def nearest(pred, cx, cy):
+        cands = [p for p in pois if pred(p)]
+        return min(cands, key=lambda p: (p["x"] - cx) ** 2 + (p["y"] - cy) ** 2) if cands else None
+
+    def mon(mid_):
+        return next((m for m in monuments if m["id"] == mid_), None)
+
+    def add(text, x, y, source, guessed=False):
+        x = max(0, min(COLS - 1, int(x))); y = max(0, min(ROWS - 1, int(y)))
+        out.append(dict(text=("★ " if not guessed else "★? ") + text, x=x, y=y))
+        say(f"  lieu : {text} → {x},{y} — {'DEVINÉ : ' if guessed else ''}{source}")
+
+    px, py, pw, ph = place_rect if place_rect else (COLS // 2, ROWS // 2, 1, 1)
+    pcx, pcy = px + pw // 2, py + ph // 2
+    add("marché", pcx - 3, pcy - 1, "place Jean-Jaurès (OSM place=square)")
+    cafe = nearest(lambda p: p["amenity"] in ("cafe", "bar") and px - 1 <= p["x"] <= px + pw + 1 and py - 1 <= p["y"] <= py + ph + 1, pcx, pcy)
+    if cafe:
+        add(f"terrasse de café ({cafe['name'] or 'café'})", cafe["x"], cafe["y"], f"OSM {cafe['amenity']} « {cafe['name']} » sur la place")
+    else:
+        add("terrasse de café", px, py + ph, "aucun café OSM sur la place", guessed=True)
+    coche = nearest(lambda p: re.search(r"coche|embarcad|bateau", p["name"], re.I) or p["amenity"] == "ferry_terminal", pcx, pcy)
+    if coche:
+        add("embarcadère du coche d'eau", coche["x"], coche["y"], f"OSM « {coche['name']} »")
+    else:
+        j = mon("jardin-eveche")
+        x, y = (j["x"] + j["w"], j["y"] + 2) if j else (pcx + 10, pcy + 20)
+        add("embarcadère du coche d'eau", x, y, "rien dans OSM ; placé sur la rive gauche au pied du jardin de l'Évêché", guessed=True)
+    j = mon("jardin-eveche")
+    if j:
+        add("jardin : jardiniers et promeneurs", j["x"] + j["w"] // 2 - 4, j["y"] + j["h"] // 2, "monument jardin-eveche")
+    ma = mon("maisons-agout")
+    if ma:
+        add("balcons sur l'Agout : linge et pêcheurs", ma["x"] - 6, ma["y"] + ma["h"] // 2, "monument maisons-agout")
+    col = nearest(lambda p: p["amenity"] in ("school", "college") and re.search(r"coll[èe]ge|lyc[ée]e|secondaire", p["name"], re.I), pcx, pcy) \
+        or nearest(lambda p: p["amenity"] in ("school", "college"), pcx, pcy)
+    if col:
+        add(f"sortie de collège ({col['name']})", col["x"], col["y"], f"OSM école « {col['name']} », la plus proche de la place")
+    else:
+        add("sortie de collège", pcx + 20, pcy, "aucune école dans OSM", guessed=True)
+    gar = nearest(lambda p: p["shop"] in ("car_repair", "car") or p["amenity"] == "fuel" or re.search(r"garage", p["name"], re.I), pcx, pcy)
+    if gar:
+        add(f"garage ({gar['name'] or 'garage'})", gar["x"], gar["y"], f"OSM « {gar['name']} »")
+    else:
+        # deviné : un îlot ordinaire en bordure du cadre, côté rive droite, où un garage est plausible
+        add("garage", COLS - 8, ROWS - 12, "aucun garage dans OSM ; placé dans un îlot de la rive droite, au sud-est", guessed=True)
+    bak = nearest(lambda p: p["shop"] in ("bakery", "pastry"), pcx, pcy)
+    if bak:
+        add(f"boulangerie ({bak['name']})", bak["x"], bak["y"], f"OSM boulangerie « {bak['name']} », la plus proche de la place")
+    else:
+        add("boulangerie", pcx - 12, pcy + 6, "aucune boulangerie dans OSM", guessed=True)
+    add("chantier de ravalement", COLS - 20, py - 8, "rien dans OSM ; placé sur un îlot de la rue Villegoudou, rive droite, bien visible depuis le pont", guessed=True)
+    bar = nearest(lambda p: p["amenity"] in ("bar", "pub") and not (px - 1 <= p["x"] <= px + pw + 1 and py - 1 <= p["y"] <= py + ph + 1), pcx, pcy)
+    if bar:
+        add(f"rugby : troisième mi-temps ({bar['name']})", bar["x"], bar["y"], f"OSM bar « {bar['name']} », le plus proche hors de la place ; le rugby est dans les personnages")
+    else:
+        add("rugby : troisième mi-temps", pcx, pcy + 12, "aucun bar dans OSM", guessed=True)
+    return out
+
+
 def feature_center(features, pattern):
     rx = re.compile(pattern)
     best = None
@@ -794,6 +883,61 @@ def build(osm_path, rotate=None, core=None, verbose=True):
             active.append(st)
     streets = active
 
+    # 3b. fusion des voies parallèles accolées (règle du 18/09) : deux voies de
+    #     noms différents, de même orientation, dont les emprises sont à moins
+    #     d'une case l'une de l'autre sur plus de la moitié de la longueur de la
+    #     plus courte, ne font qu'une : on garde la plus large (à largeur égale,
+    #     la plus longue), l'autre est supprimée et signalée
+    merged = 0
+
+    def axis_dirs(st):
+        """Pour chaque case de l'axe, la direction locale ('h' ou 'v')."""
+        out = {}
+        for a, b in st["segs"]:
+            d = "h" if a[1] == b[1] else "v"
+            for c in line_cells(a, b):
+                out[c] = d
+        return out
+
+    changed = True
+    while changed:
+        changed = False
+        by_cell = {}
+        for st in streets:
+            for c in st["cells"]:
+                by_cell.setdefault(c, set()).add(st["id"])
+        by_id = {st["id"]: st for st in streets}
+        for st in sorted(streets, key=lambda st: (st["w"], len(st["axis"]))):
+            if len(st["axis"]) < 4:
+                continue
+            dirs = axis_dirs(st)
+            near = Counter()
+            for (x, y), d in dirs.items():
+                # on regarde de part et d'autre de l'axe, perpendiculairement, jusqu'à
+                # (moitié de ma largeur) + 1 case d'écart + (moitié de la largeur de l'autre)
+                found = set()
+                for k in range(1, st["w"] // 2 + 1 + 4):
+                    for sgn in (-1, 1):
+                        n = (x, y + sgn * k) if d == "h" else (x + sgn * k, y)
+                        for oid in by_cell.get(n, ()):
+                            o = by_id[oid]
+                            if o["name"] == st["name"] or (o["name"] and o["name"] == st["name"]):
+                                continue
+                            if k <= st["w"] // 2 + 1 + o["w"] // 2 + 1 and axis_dirs(o).get(min(o["axis"], key=lambda c: (c[0] - n[0]) ** 2 + (c[1] - n[1]) ** 2), d) == d:
+                                found.add(oid)
+                for oid in found:
+                    near[oid] += 1
+            for oid, n in near.most_common():
+                o = by_id[oid]
+                if n / len(st["axis"]) > 0.5 and (o["w"] > st["w"] or (o["w"] == st["w"] and len(o["axis"]) >= len(st["axis"]))):
+                    dropped.append((st["label"], f"fusionnée avec « {o['label']} » (parallèles et accolées sur {100 * n // len(st['axis'])} % de sa longueur, largeur gardée {o['w']})"))
+                    streets = [t for t in streets if t["id"] != st["id"]]
+                    merged += 1; changed = True
+                    break
+            if changed:
+                break
+    say(f"voies accolées fusionnées : {merged}")
+
     # 3c. tracé définitif, masque des voies nommées, labels
     named_mask = [[False] * COLS for _ in range(ROWS)]
     center_cells = {}          # id de voie → cases de l'axe
@@ -907,7 +1051,7 @@ def build(osm_path, rotate=None, core=None, verbose=True):
                         for d in range(1, 12):
                             for dx, dy in ((d, 0), (-d, 0), (0, d), (0, -d)):
                                 n = (c[0] + dx, c[1] + dy)
-                                if inside(*n) and n not in F and grid[n[1]][n[0]] in ".I":
+                                if inside(*n) and n not in F and grid[n[1]][n[0]] in ".I" and not protected[n[1]][n[0]]:
                                     best = n; break
                             if best:
                                 break
@@ -1019,6 +1163,8 @@ def build(osm_path, rotate=None, core=None, verbose=True):
             if grid[y][x] == ".":
                 grid[y][x] = "I"
     labels.append(dict(text="Agout", x=next((x for x in range(COLS) if grid[3][x] == "w"), COLS // 2), y=3))
+    say("lieux à histoires (DECISIONS.md) :")
+    labels += story_labels(parse_pois(osm_path, g), grid, monuments, place_rect, say)
     comps = components(grid, "I", protected)
     n_small = 0
     for c in comps:

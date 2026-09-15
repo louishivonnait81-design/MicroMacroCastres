@@ -9,13 +9,14 @@ Passer du brouillon automatique (`data/layout.json`, fiche 002) à un plan de je
 - `tools/layout-editor/index.html`, `pipeline/check_layout.py`, `pipeline/00d_layout_print.py`
 - `DECISIONS.md` : échelles, monuments, lieux à histoires
 
-## Ce que le brouillon laisse à décider (à arbitrer par Louis dans l'éditeur)
-- Les rectangles de monuments sont les boîtes englobantes d'emprises réelles parfois en L (Évêché et jardin se chevauchent à l'affichage, pas dans les cases).
-- Les 31 îlots de moins de 4 cases de côté sont marqués `m` (maison unique à 2 niveaux) ; à vérifier un par un.
-- Les voies repoussées au bord des monuments (jardin : 63 cases) sont à relire.
+## Fait par script le 18/09 (règles de Louis)
+- Voies parallèles accolées à moins d'une case fusionnées en une seule, à la largeur de la plus large (29 fusions, listées dans `out/voies_supprimees.txt`).
+- Plus aucune case étrangère dans les boîtes de monuments : une voie repoussée ne peut plus entrer dans un monument déjà posé.
+- Les îlots de moins de 4 cases restent des maisons uniques (lettre `m`), c'est voulu.
+- Les dix lieux à histoires de DECISIONS.md sont posés en labels (préfixe ★ ; ★? = endroit deviné faute de donnée OSM : embarcadère du coche d'eau, garage, chantier).
 
 ## Étapes
-1. **Louis, dans l'éditeur** : ouvrir `data/layout.json`, charger le fond, corriger quartier par quartier : voies manquantes ou en trop, coudes mal placés, rectangles des monuments (outil Monument : tracer, saisir id et niveaux), cases `m` à confirmer ou à fusionner. Poser un label par lieu à histoires (marché, café, embarcadère, collège, garage, boulangerie, chantier…). Exporter, déposer dans `data/layout.json`, commiter.
+1. **Louis** : imprimer l'A3 portrait, le poser à côté de la carte MicroMacro et répondre à deux questions par oui ou non : la place et les rues connues sont-elles là où on les attend ? Les rues ont-elles l'air de rues et les îlots d'îlots ? Deux oui → fiche 004. Les retouches case par case dans l'éditeur viendront plus tard, quand la 3D aura montré ce qui gêne vraiment.
 2. **Claude Code** : `python3 pipeline/check_layout.py data/layout.json` doit passer sans erreur ; il vérifie la présence des 7 monuments attendus et compte les cases `m` et les labels.
 3. **Claude Code** : `python3 pipeline/00d_layout_print.py` produit `out/layout_A3.png` (A3 portrait, 297 × 420 mm à 300 dpi, 1 case ≈ 3,5 mm) et `out/layout_A3.pdf`, avec légende, marges 1–4 / A–G et monuments hachurés. Posé à côté de la carte MicroMacro, les deux sont dans le même sens.
 4. **Louis** : imprimer l'A3 à 100 %, poser à côté de la carte MicroMacro, répondre par oui ou non à la question « est-ce que ça se compare : rues, îlots, place, rivière ? ». Si non, retour à l'étape 1 avec la liste des quartiers à revoir.
