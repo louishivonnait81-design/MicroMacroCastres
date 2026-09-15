@@ -129,7 +129,7 @@ def main():
         check(g[34 * cols + 45] == orig[34 * cols + 45], "deux annulations retirent la ligne")
 
         print("monument")
-        page.keyboard.press("m")
+        page.keyboard.press("n")
         drag(page, 60, 4, 69, 9)                      # 10 × 6
         page.wait_for_selector("#monform:not([hidden])")
         page.fill("#mId", "test-monument")
@@ -139,7 +139,7 @@ def main():
         m = [x for x in mons if x["id"] == "test-monument"]
         check(len(m) == 1 and (m[0]["x"], m[0]["y"], m[0]["w"], m[0]["h"], m[0]["levels"]) == (60, 4, 10, 6, 2),
               f"monument créé : {m}")
-        page.keyboard.press("m")
+        page.keyboard.press("n")
         click_cell(page, 22, 20)                      # clic sur eveche → sélection
         check(page.input_value("#mId") == "eveche", "clic sur un monument existant le sélectionne")
         page.click("#mCancel")

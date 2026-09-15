@@ -94,7 +94,7 @@
       <button data-tool="pencil" title="Crayon (C). Maj+clic : ligne droite depuis le dernier point">Crayon <kbd>C</kbd></button>
       <button data-tool="rect" title="Rectangle (E)">Rectangle <kbd>E</kbd></button>
       <button data-tool="bucket" title="Seau (G)">Seau <kbd>G</kbd></button>
-      <button data-tool="monument" title="Monument (M) : tracer un rectangle, ou cliquer un monument existant">Monument <kbd>M</kbd></button>
+      <button data-tool="monument" title="Monument (N) : tracer un rectangle, ou cliquer un monument existant">Monument <kbd>N</kbd></button>
       <button data-tool="label" title="Label (T) : cliquer pour poser un texte">Label <kbd>T</kbd></button>
       <button data-tool="pan" title="Main (H, ou espace enfoncé)">Main <kbd>H</kbd></button>
     </div>
@@ -142,7 +142,7 @@
     <h2>Aide</h2>
     <p>Molette ou deux doigts : déplacer. <kbd>⌘</kbd>+molette ou pincer : zoom. <kbd>+</kbd>/<kbd>−</kbd> : zoom, <kbd>0</kbd> : ajuster.</p>
     <p>Crayon : clic ou glisser. <kbd>Maj</kbd>+clic : ligne droite depuis le dernier point peint.</p>
-    <p>Type : appuyer sur sa lettre (<kbd>r</kbd> <kbd>b</kbd> <kbd>I</kbd> <kbd>p</kbd> <kbd>P</kbd> <kbd>w</kbd> <kbd>q</kbd> <kbd>.</kbd>).</p>
+    <p>Type : appuyer sur sa lettre (<kbd>r</kbd> <kbd>b</kbd> <kbd>I</kbd> <kbd>m</kbd> <kbd>p</kbd> <kbd>P</kbd> <kbd>w</kbd> <kbd>q</kbd> <kbd>.</kbd>).</p>
     <p>Marges A–G / 1–4 comme sur le papier. Les monuments sont hachurés, les rues étroites en rouge.</p>
   </section>
 </aside>
@@ -158,8 +158,8 @@
 'use strict';
 
 // ---------------------------------------------------------------- données
-const DEFAULT_LEGEND = { r: 'rue', b: 'boulevard', I: 'ilot', p: 'place', P: 'parc', w: 'eau', q: 'quai', '.': 'vide' };
-const COLORS = { r: '#e3e3e3', b: '#cdd6c4', I: '#c9a27e', p: '#f3d66b', P: '#9fd39b', w: '#8ec1e6', q: '#dccdb0', '.': '#ffffff' };
+const DEFAULT_LEGEND = { r: 'rue', b: 'boulevard', I: 'ilot', m: 'maison', p: 'place', P: 'parc', w: 'eau', q: 'quai', '.': 'vide' };
+const COLORS = { r: '#e3e3e3', b: '#cdd6c4', I: '#c9a27e', m: '#a67650', p: '#f3d66b', P: '#9fd39b', w: '#8ec1e6', q: '#dccdb0', '.': '#ffffff' };
 const EXTRA_COLORS = ['#e6a0c4', '#a0c4e6', '#c4e6a0', '#e6c4a0', '#a0e6c4', '#c4a0e6'];
 const OPEN_TYPES = ['r', 'b', 'p', 'P'];
 const MIN_STREET = 3;
@@ -689,7 +689,7 @@ window.addEventListener('keydown', e => {
   if (e.key in legend) { setType(e.key); return; }
   const k = e.key.toLowerCase();
   if (k === 'c') setTool('pencil'); else if (k === 'e') setTool('rect');
-  else if (k === 'g') setTool('bucket'); else if (k === 'm') setTool('monument');
+  else if (k === 'g') setTool('bucket'); else if (k === 'n') setTool('monument');
   else if (k === 't') setTool('label'); else if (k === 'h') setTool('pan');
   else if (e.key === '+' || e.key === '=') zoomAt(1.25, canvas.clientWidth / 2, canvas.clientHeight / 2);
   else if (e.key === '-') zoomAt(0.8, canvas.clientWidth / 2, canvas.clientHeight / 2);

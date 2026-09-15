@@ -45,6 +45,7 @@ micromacro-castres/
     00a_fetch_osm.py         Overpass → data/castres.osm (à lancer hors du cloud)
     00b_osm_to_fond.py       castres.osm → fond_castres.png (fond gris de l'éditeur)
     00_osm_to_layout.py      castres.osm → layout.json (brouillon, fiche 002)
+    00d_layout_print.py      layout.json → out/layout_A3.png + .pdf (porte A3, fiche 003)
     01_layout_to_blocks.py   layout.json → blocks.json (volumes)
     02_build_blender.py      blocks.json → scène + rendu (blender -b)
     03_assemble_svg.py       squelette + monuments + calques → carte.svg

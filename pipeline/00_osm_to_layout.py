@@ -57,7 +57,10 @@ PERIM = dict(south=43.6010, west=2.2335, north=43.6076, east=2.2450)
 #     au plus un coude à angle droit toutes les MIN_RUN cases
 #  3. tout ce qui n'est ni voie, ni place, ni parc, ni eau est îlot, plein
 #  4. le vide n'est qu'une information
-STREET_W, BOULEVARD_W = 4, 6
+# Largeurs du 17/09 : venelle 1, rue ordinaire (et ruelle) 2, avenue / voie
+# primaire 3, cinq rues nommées de DECISIONS 4, boulevards Léon Bourgeois /
+# Miredames / Henri Sizaire et quais 5
+VENELLE_W, RUE_W, AVENUE_W, STREET_W, BOULEVARD_W = 1, 2, 3, 4, 5
 MIN_RUN, BAND = 8, 2.0
 NAMED_STREETS = [r"Rue Sabatier$", r"Rue Frédéric Thomas", r"Rue Victor Hugo", r"Rue de l'Hôtel de Ville",
                  r"Rue Villegoudou", r"Quai des Jacobins", r"^Pont Vieux", r"^Pont Neuf"]
@@ -95,9 +98,9 @@ ALIGN_TOLERANCE = 20     # ° : un élément qui s'écarte de plus que ça des a
 # boulevards ont le droit d'être en escalier.
 ALIGN_ON = [r"Place Jean[- ]Jaur[èe]s", r"^Rue Sabatier$", r"^Rue Victor Hugo$"]
 
-COLORS = {"r": (227, 227, 227), "b": (205, 214, 196), "I": (201, 162, 126), "p": (243, 214, 107),
+COLORS = {"r": (227, 227, 227), "b": (205, 214, 196), "I": (201, 162, 126), "m": (166, 118, 80), "p": (243, 214, 107),
           "P": (159, 211, 155), "w": (142, 193, 230), "q": (220, 205, 176), ".": (255, 255, 255)}
-LEGEND = {"r": "rue", "b": "boulevard", "I": "ilot", "p": "place", "P": "parc", "w": "eau", "q": "quai", ".": "vide"}
+LEGEND = {"r": "rue", "b": "boulevard", "I": "ilot", "m": "maison", "p": "place", "P": "parc", "w": "eau", "q": "quai", ".": "vide"}
 
 
 # ---------------------------------------------------------------------------
@@ -490,16 +493,16 @@ def classify(tags, name):
     first = name.split(" ")[0] if name else ""
     named = any(re.compile(p).search(name) for p in NAMED_STREETS)
     if any(re.compile(p).search(name) for p in BIG_BOULEVARDS) or first == "Quai":
-        return dict(w=BOULEVARD_W, ch="b", kind="boulevard / quai 6", named=True), None
+        return dict(w=BOULEVARD_W, ch="b", kind=f"boulevard / quai {BOULEVARD_W}", named=True), None
     if named:
-        return dict(w=STREET_W, ch="r", kind="rue nommée 4", named=True), None
+        return dict(w=STREET_W, ch="r", kind=f"rue nommée {STREET_W}", named=True), None
     if first in ("Boulevard", "Avenue", "Allées") or hw in ("primary", "secondary", "primary_link", "secondary_link"):
-        return dict(w=STREET_W, ch="r", kind="avenue / voie primaire 4", named=bool(name)), None
+        return dict(w=AVENUE_W, ch="r", kind=f"avenue / voie primaire {AVENUE_W}", named=bool(name)), None
     if first in ("Venelle", "Passage", "Escalier", "Rampe") or hw in ("footway", "steps"):
-        return dict(w=1, ch="r", kind="venelle 1", named=bool(name)), None
+        return dict(w=VENELLE_W, ch="r", kind=f"venelle {VENELLE_W}", named=bool(name)), None
     if first in ("Ruelle", "Impasse") or hw in ("living_street", "service"):
-        return dict(w=2, ch="r", kind="ruelle 2", named=bool(name)), None
-    return dict(w=3, ch="r", kind="rue 3", named=bool(name)), None
+        return dict(w=RUE_W, ch="r", kind=f"ruelle {RUE_W}", named=bool(name)), None
+    return dict(w=RUE_W, ch="r", kind=f"rue {RUE_W}", named=bool(name)), None
 
 
 def rectify_manhattan(pts, min_run=8, band=2.0):
@@ -656,7 +659,7 @@ def line_cells(a, b):
 # ---------------------------------------------------------------------------
 # Construction du brouillon
 # ---------------------------------------------------------------------------
-def build(osm_path, rotate="auto", protect="osm", verbose=True):
+def build(osm_path, rotate="auto", verbose=True):
     log = []
 
     def say(*a):
@@ -727,9 +730,7 @@ def build(osm_path, rotate="auto", protect="osm", verbose=True):
     #    cases), doublons de trottoir écartés, îlots < 4 cases résorbés en
     #    supprimant la voie non nommée la moins importante, connexions vérifiées
     for st in streets:
-        st["decisions"] = st["named"] and (st["kind"] in ("rue nommée 4", "boulevard / quai 6"))
-        if protect == "decisions":
-            st["named"] = st["decisions"]
+        st["decisions"] = st["named"] and st["kind"].startswith(("rue nommée", "boulevard"))
         st["segs"] = rectify_manhattan(st["pts"], MIN_RUN, BAND)
         st["axis"] = [c for a, b in st["segs"] for c in line_cells(a, b)]
         st["axis"] = [c for i_, c in enumerate(st["axis"]) if i_ == 0 or c != st["axis"][i_ - 1]]
@@ -767,50 +768,6 @@ def build(osm_path, rotate="auto", protect="osm", verbose=True):
         else:
             active.append(st)
     streets = active
-
-    # 3b. îlots de moins de 4 cases de côté : on retire la voie non nommée la
-    #     moins importante qui les borde, jusqu'à ce qu'il n'en reste plus
-    def street_layer(streets_):
-        layer = [row[:] for row in grid]
-        if place_rect:
-            fill_rect(layer, *place_rect, "p", allow=lambda x, y: layer[y][x] not in "wq")
-        for st in streets_:
-            allow = (lambda x, y: layer[y][x] not in "p") if st["bridge"] else (lambda x, y: layer[y][x] not in "wp")
-            for a, b in st["segs"]:
-                stamp_line(layer, a, b, st["w"], st["ch"], allow)
-        return layer
-
-    def small_blocks(layer):
-        comps = components(layer, ".", [[False] * COLS for _ in range(ROWS)])
-        return [c for c in comps if min(bbox_of(c)[2:]) < 4]
-
-    stuck = 0
-    for _ in range(400):
-        layer = street_layer(streets)
-        small = small_blocks(layer)
-        if not small:
-            break
-        removed_any = False
-        for cells in small:
-            cs = set(cells)
-            rim = {(x + dx, y + dy) for x, y in cells for dx in (-1, 0, 1) for dy in (-1, 0, 1)} - cs
-            # candidates : voies non protégées dont les cases touchent l'îlot
-            cands = [st for st in streets if not st["named"] and st["cells"] & rim]
-            if not cands:
-                continue
-            victim = min(cands, key=importance)
-            x, y, w, h = bbox_of(cells)
-            dropped.append((victim["label"], f"crée un îlot de {w} × {h} cases en {x},{y}"))
-            streets = [st for st in streets if st["id"] != victim["id"]]
-            removed_any = True
-            break          # une voie à la fois : la grille change
-        if not removed_any:
-            stuck = len(small)
-            break
-    layer = street_layer(streets)
-    small = small_blocks(layer)
-    if small:
-        say(f"ATTENTION : {len(small)} îlot(s) de moins de 4 cases subsistent, bordés uniquement de voies nommées ou d'eau (à corriger dans l'éditeur)")
 
     # 3c. tracé définitif, masque des voies nommées, labels
     named_mask = [[False] * COLS for _ in range(ROWS)]
@@ -878,37 +835,49 @@ def build(osm_path, rotate="auto", protect="osm", verbose=True):
         # la place et les autres monuments (les voies recouvertes sont comptées)
         return any(river[yy][xx] for yy in range(r["y"], r["y"] + r["h"]) for xx in range(r["x"], r["x"] + r["w"]) if inside(xx, yy))
 
-    def settle(r, avoid_named=False):
-        x0, y0 = r["x"], r["y"]
-        for radius in range(0, 40):
-            cands = [(x0 + dx, y0 + dy) for dx in range(-radius, radius + 1) for dy in range(-radius, radius + 1)
-                     if max(abs(dx), abs(dy)) == radius]
-            cands.sort(key=lambda c: (c[0] - x0) ** 2 + (c[1] - y0) ** 2)
-            for x, y in cands:
-                if x < 0 or y < 0 or x + r["w"] > COLS or y + r["h"] > ROWS:
-                    continue
-                t = dict(x=x, y=y, w=r["w"], h=r["h"])
-                if not any(overlaps(t, b) for b in placed) and not blocked(t, avoid_named):
-                    return t
-        say(f"ATTENTION : aucune position libre trouvée près de {x0},{y0} pour un rectangle {r['w']} × {r['h']}")
-        return r
+    def free_cell(xx, yy):
+        return inside(xx, yy) and grid[yy][xx] in ".IP" and not any(
+            b["x"] <= xx < b["x"] + b["w"] and b["y"] <= yy < b["y"] + b["h"] for b in placed)
+
+    def trim(r):
+        """Règle 3 : les voies gagnent sur tout. Plus grand rectangle inscrit
+        dans l'emprise prévue qui ne recouvre ni voie, ni eau, ni place, ni
+        autre monument. Le monument n'est jamais déplacé."""
+        x0, y0, w, h = r["x"], r["y"], r["w"], r["h"]
+        ok = [[free_cell(x0 + i, y0 + j) for i in range(w)] for j in range(h)]
+        best, best_area = None, 0
+        for j0 in range(h):
+            for j1 in range(j0, h):
+                for i0 in range(w):
+                    if not all(ok[j][i0] for j in range(j0, j1 + 1)):
+                        continue
+                    i1 = i0
+                    while i1 + 1 < w and all(ok[j][i1 + 1] for j in range(j0, j1 + 1)):
+                        i1 += 1
+                    area = (i1 - i0 + 1) * (j1 - j0 + 1)
+                    if area > best_area:
+                        best_area, best = area, dict(x=x0 + i0, y=y0 + j0, w=i1 - i0 + 1, h=j1 - j0 + 1)
+        return best
 
     covered = Counter()
 
-    def put(mid_, cx, cy, w, h, ch, levels, name, avoid_named=False):
+    def put(mid_, cx, cy, w, h, ch, levels, name):
         x, y, w, h = centered_rect(cx, cy, w, h)
-        r = settle(dict(x=x, y=y, w=w, h=h), avoid_named)
-        for yy in range(r["y"], r["y"] + h):
-            for xx in range(r["x"], r["x"] + w):
-                if inside(xx, yy):
-                    if grid[yy][xx] in "rb":
-                        covered[mid_] += 1
-                    grid[yy][xx] = ch
-                    protected[yy][xx] = True
+        r = trim(dict(x=x, y=y, w=w, h=h))
+        if r is None:
+            say(f"ATTENTION : {mid_} ← « {name} » : aucune case libre dans l'emprise prévue {w} × {h} en {x},{y} ; monument non posé")
+            return None
+        for yy in range(r["y"], r["y"] + r["h"]):
+            for xx in range(r["x"], r["x"] + r["w"]):
+                grid[yy][xx] = ch
+                protected[yy][xx] = True
         placed.append(r)
-        monuments.append(dict(id=mid_, x=r["x"], y=r["y"], w=w, h=h, levels=levels))
-        moved = "" if (r["x"], r["y"]) == (x, y) else f", décalé de ({r['x'] - x:+d}, {r['y'] - y:+d})"
-        say(f"monument {mid_} ← « {name} » en {r['x']},{r['y']} ({w} × {h}){moved}")
+        monuments.append(dict(id=mid_, x=r["x"], y=r["y"], w=r["w"], h=r["h"], levels=levels))
+        ratio = r["w"] * r["h"] / (w * h)
+        note = f", emprise rognée à {r['w']} × {r['h']} ({100 * ratio:.0f} % du prévu)" if ratio < 1 else ""
+        if ratio < 0.5:
+            note += " — ATTENTION : moins de la moitié de l'emprise prévue, à arbitrer"
+        say(f"monument {mid_} ← « {name} » prévu {w} × {h} en {x},{y}{note}")
         return r
 
     boxes = {}
@@ -916,9 +885,9 @@ def build(osm_path, rotate="auto", protect="osm", verbose=True):
         if mid_ == "theatre" and place_rect:
             px, py, pw, ph = place_rect
             boxes[mid_] = put(mid_, px + THEATRE_FROM_PLACE["dx"] + w / 2, py + ph + THEATRE_FROM_PLACE["dy"] + h / 2, w, h, "I", levels,
-                              f"sud-ouest de la place, décalage explicite {THEATRE_FROM_PLACE}", avoid_named=False)
+                              f"sud-ouest de la place, décalage explicite {THEATRE_FROM_PLACE}")
             continue
-        if mid_ == "eveche" and "saint-benoit" in boxes:
+        if mid_ == "eveche" and boxes.get("saint-benoit"):
             cb = boxes["saint-benoit"]
             boxes[mid_] = put(mid_, cb["x"] + EVECHE_FROM_CATHEDRAL["dx"] + w / 2, cb["y"] + cb["h"] + EVECHE_FROM_CATHEDRAL["dy"] + h / 2,
                               w, h, "I", levels, f"au sud de la cathédrale, décalage explicite {EVECHE_FROM_CATHEDRAL}")
@@ -929,7 +898,7 @@ def build(osm_path, rotate="auto", protect="osm", verbose=True):
             continue
         dx, dy = MONUMENT_OFFSETS.get(mid_, (0, 0))
         boxes[mid_] = put(mid_, c[0] + dx, c[1] + dy, w, h, "I", levels, name + (f", décalage explicite ({dx:+d}, {dy:+d})" if dx or dy else ""))
-    if "eveche" in boxes:
+    if boxes.get("eveche"):
         eb = boxes["eveche"]
         put("jardin-eveche", eb["x"] + JARDIN_FROM_EVECHE["dx"] + JARDIN_W / 2, eb["y"] + eb["h"] + JARDIN_FROM_EVECHE["dy"] + JARDIN_H / 2,
             JARDIN_W, JARDIN_H, "P", 0, f"au sud de l'Évêché, décalage explicite {JARDIN_FROM_EVECHE}")
@@ -975,16 +944,9 @@ def build(osm_path, rotate="auto", protect="osm", verbose=True):
                 run = []
         if best and len(best) >= 4:
             h = min(20, len(best)); y = best[0] + (len(best) - h) // 2
-            for yy in range(y, y + h):
-                for xx in range(x, x + 4):
-                    if grid[yy][xx] in "rb":
-                        covered["maisons-agout"] += 1
-                    grid[yy][xx] = "I"; protected[yy][xx] = True
-            placed.append(dict(x=x, y=y, w=4, h=h))
-            monuments.append(dict(id="maisons-agout", x=x, y=y, w=4, h=h, levels=3))
-            say(f"monument maisons-agout en {x},{y} (4 × {h}), rive gauche entre les ponts")
-    if covered:
-        say("voies recouvertes par les monuments (cases) : " + ", ".join(f"{k} {v}" for k, v in covered.items()))
+            put("maisons-agout", x + 2, y + h / 2, 4, h, "I", 3, "rangée sur la rive gauche entre les ponts")
+        else:
+            say("ATTENTION : pas de place pour les maisons sur l'Agout entre les ponts")
 
     # 5. règle 3 : tout le reste est îlot, rempli à 100 % ; aucune découpe
     for y in range(ROWS):
@@ -992,6 +954,14 @@ def build(osm_path, rotate="auto", protect="osm", verbose=True):
             if grid[y][x] == ".":
                 grid[y][x] = "I"
     labels.append(dict(text="Agout", x=next((x for x in range(COLS) if grid[3][x] == "w"), COLS // 2), y=3))
+    comps = components(grid, "I", protected)
+    n_small = 0
+    for c in comps:
+        if min(bbox_of(c)[2:]) < 4:
+            for xx, yy in c:
+                grid[yy][xx] = "m"
+            n_small += 1
+    say(f"îlots de moins de 4 cases de côté → maison unique à 2 niveaux (lettre m) : {n_small}")
     comps = components(grid, "I", [[False] * COLS for _ in range(ROWS)])
     sizes = sorted((max(bbox_of(c)[2:]) for c in comps), reverse=True)
     n_total = COLS * ROWS
@@ -1069,7 +1039,7 @@ def preview(layout, path, log, cell=20, margin=70):
     for c, name in LEGEND.items():
         d.rectangle([lx, 44, lx + 18, 62], fill=COLORS[c], outline=(0, 0, 0))
         d.text((lx + 24, 53), f"{c} {name}", fill=(0, 0, 0), font=small, anchor="lm")
-        lx += 105
+        lx += 95
     d.text((lx + 10, 53), "monuments hachurés", fill=(0, 0, 0), font=small, anchor="lm")
     img.save(path)
 
@@ -1107,18 +1077,15 @@ def main():
     ap.add_argument("--preview", default="out/layout_preview.png")
     ap.add_argument("--fond", default="data/fond_castres_grille.png", help="fond recadré sur la grille ('' pour ne pas le produire)")
     ap.add_argument("--rotate", default="auto", help="angle de la grille en degrés, ou 'auto' (place + rue Sabatier droites ; -5,5°)")
-    ap.add_argument("--protect", default="osm", choices=["osm", "decisions"],
-                    help="voies qui ne sautent jamais : 'osm' = toute voie qui a un nom dans OSM ; "
-                         "'decisions' = seulement les cinq rues nommées, les trois boulevards et les quais")
     ap.add_argument("--dropped", default="out/voies_supprimees.txt", help="liste des voies supprimées avec la raison")
     a = ap.parse_args()
-    layout, g, log = build(a.osm, a.rotate, a.protect)
+    layout, g, log = build(a.osm, a.rotate)
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     dropped = layout.pop("dropped")
     if a.dropped:
         os.makedirs(os.path.dirname(a.dropped) or ".", exist_ok=True)
         with open(a.dropped, "w", encoding="utf-8") as f:
-            f.write(f"Voies supprimées ({len(dropped)}) — protection : {a.protect}\n\n" + "\n".join(f"- {d}" for d in dropped) + "\n")
+            f.write(f"Voies supprimées ({len(dropped)})\n\n" + "\n".join(f"- {d}" for d in dropped) + "\n")
         print(f"écrit {a.dropped} ({len(dropped)} voies)")
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(layout, f, ensure_ascii=False, indent=1)

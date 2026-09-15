@@ -9,10 +9,10 @@
 2. **Image de fond** : glisser `data/fond_castres.png` (ou le choisir). Régler l'opacité,
    le décalage X / Y et la largeur en cases pour l'aligner sur la grille ; la transparence
    des cases se règle à part. Ces réglages sont mémorisés dans le JSON exporté (`background`).
-3. **Peindre** : choisir un type (clic dans la liste ou touche `r b I p P w q .`), puis
+3. **Peindre** : choisir un type (clic dans la liste ou touche `r b I m p P w q .`), puis
    crayon (`C`, clic ou glisser ; `Maj`+clic = ligne droite depuis le dernier point),
    rectangle (`E`), seau (`G`).
-4. **Monument** (`M`) : tracer un rectangle, saisir l'id et le nombre de niveaux.
+4. **Monument** (`N`) : tracer un rectangle, saisir l'id et le nombre de niveaux.
    Cliquer un monument existant pour le modifier ou le supprimer.
 5. **Label** (`T`) : cliquer pour poser un texte ; la liste à gauche permet de l'éditer.
 6. **Exporter layout.json** (`⌘S`) : le fichier est téléchargé, à déposer dans `data/`.

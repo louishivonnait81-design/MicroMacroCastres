@@ -52,7 +52,7 @@ def main():
     layout = {
         "cols": COLS, "rows": ROWS, "cell_cm": 1.0,
         "cells": cells,
-        "legend": {"r": "rue", "b": "boulevard", "I": "ilot", "p": "place", "P": "parc",
+        "legend": {"r": "rue", "b": "boulevard", "I": "ilot", "m": "maison", "p": "place", "P": "parc",
                    "w": "eau", "q": "quai", ".": "vide"},
         "monuments": [
             {"id": "saint-benoit", "x": 56, "y": 32, "w": 10, "h": 14, "levels": 3},

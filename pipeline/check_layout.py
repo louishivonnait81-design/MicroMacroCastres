@@ -17,9 +17,10 @@ import argparse
 import json
 import sys
 
-DEFAULT_LEGEND = {"r": "rue", "b": "boulevard", "I": "ilot", "p": "place", "P": "parc",
+DEFAULT_LEGEND = {"r": "rue", "b": "boulevard", "I": "ilot", "m": "maison", "p": "place", "P": "parc",
                   "w": "eau", "q": "quai", ".": "vide"}
 OPEN_TYPES = "rbpP"       # voies + places + parcs : la part de « vide »
+EXPECTED_MONUMENTS = ["saint-benoit", "eveche", "jardin-eveche", "theatre", "maisons-agout", "pont-vieux", "pont-neuf"]
 STREET = "rb"
 MIN_STREET = 3
 
@@ -122,6 +123,9 @@ def stats(lay, lines):
         "open_target": 33.0,
         "narrow_street_cells": len(narrow),
         "monuments": len(lay.get("monuments", [])),
+        "monuments_missing": [m for m in EXPECTED_MONUMENTS if m not in {x.get("id") for x in lay.get("monuments", [])}],
+        "houses": counts.get("m", 0),
+        "empty": counts.get(".", 0),
         "labels": len(lay.get("labels", [])),
     }
 
@@ -147,7 +151,9 @@ def main():
         ok = "OK" if st["open_share"] >= st["open_target"] else "sous l'objectif"
         print(f"  rues + places + parcs : {st['open_share']} % de la grille, {st['open_share_land']} % hors eau (objectif ≥ 33 %) → {ok}")
         print(f"  cases de voie < 3 de large : {st['narrow_street_cells']} (venelles et ruelles comprises)")
-        print(f"  monuments : {st['monuments']}, labels : {st['labels']}")
+        miss = st["monuments_missing"]
+        print(f"  monuments : {st['monuments']}" + (f", MANQUANTS : {', '.join(miss)}" if miss else ", les 7 attendus sont présents"))
+        print(f"  maisons uniques (m) : {st['houses']}, cases vides (.) : {st['empty']}, labels : {st['labels']}")
 
 
 if __name__ == "__main__":
