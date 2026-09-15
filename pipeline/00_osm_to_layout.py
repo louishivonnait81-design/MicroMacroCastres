@@ -50,7 +50,17 @@ COLS, ROWS = 106, 71
 PERIM = dict(south=43.6010, west=2.2335, north=43.6076, east=2.2450)
 
 STREET_W, BOULEVARD_W, INNER_W = 4, 6, 3
-MAIN_CLASSES = {"primary", "secondary", "tertiary", "primary_link", "secondary_link", "tertiary_link"}
+# Réseau conservé (règle 2) : boulevards, cinq rues nommées, ponts. Rien d'autre.
+# Règle 1 : chaque rue tient en au plus deux segments droits (droite ou L) ;
+# tolérance = écart maximal (cases) entre le tracé réel et le tracé redressé,
+# au-delà la rue est supprimée et signalée.
+FIT_TOL_STREET, FIT_TOL_BOULEVARD = 4, 6
+# Règle 2 : vide hors eau visé
+SHARE_LAND_MIN, SHARE_LAND_MAX = 35.0, 40.0
+# Règle 3 : la place est ceinturée d'îlots accolés (profondeur RING_D), avec
+# quatre trouées de 4 cases aux angles, en moulinet (NW → nord, NE → est,
+# SE → sud, SW → ouest) ; aucune rue ne longe la place
+RING_D, GAP_W = 6, 4
 NAMED_STREETS = [r"Rue Sabatier$", r"Rue Frédéric Thomas", r"Rue Victor Hugo", r"Rue de l'Hôtel de Ville",
                  r"Rue Villegoudou", r"Quai des Jacobins", r"^Pont Vieux", r"^Pont Neuf"]
 SKIP_CLASSES = {"motorway", "motorway_link", "trunk", "trunk_link", "footway", "path", "steps",
@@ -58,7 +68,7 @@ SKIP_CLASSES = {"motorway", "motorway_link", "trunk", "trunk_link", "footway", "
 
 WATER_MIN_W = 8          # cases : l'Agout fait 8–12 cases
 QUAI_W = 2
-PLACE_MIN, PLACE_MAX = 18, 24
+PLACE_W, PLACE_H = 18, 8   # règle 3 : dimensions fixes de la place
 JARDIN_W, JARDIN_H = 14, 10
 
 MONUMENTS = [            # id, regex sur le nom OSM, (w, h) cases, niveaux
@@ -75,7 +85,7 @@ MARGIN_EAST = 16         # cases de marge à l'est du périmètre (DECISIONS.md)
 #   y = bas de la place + dy (il donne sur la place, façade au nord)
 # - la cathédrale part de sa position OSM, décalée de (dx, dy) pour sortir de
 #   la rue Sabatier, qui se termine sur son parvis
-THEATRE_FROM_PLACE = dict(dx=-4, dy=0)
+THEATRE_FROM_PLACE = dict(dx=0, dy=0)   # dans l'îlot sud de la ceinture, à son extrémité ouest
 MONUMENT_OFFSETS = {"saint-benoit": (0, +6)}
 # - l'Évêché est accolé au sud de la cathédrale, le jardin au sud de l'Évêché
 #   (chaîne nord-sud le long de l'Agout, comme sur le terrain) ; dx = décalage
@@ -245,6 +255,115 @@ def rectify(p, q, jog=2, step=6):
     return pieces
 
 
+def merge_streets(streets):
+    """Regroupe les tronçons OSM d'une même rue en une polyligne, en chaînant
+    les tronçons qui partagent un nœud d'extrémité. S'il reste plusieurs
+    chaînes (rue interrompue), on garde la plus longue."""
+    by_name = {}
+    for st in streets:
+        by_name.setdefault(st["name"], []).append(st)
+    merged = []
+    for name, segs in by_name.items():
+        segs = [dict(s) for s in segs if len(s["nodes"]) >= 2]
+        chains = []
+        while segs:
+            cur = segs.pop(0)
+            nodes, pts = list(cur["nodes"]), list(cur["pts"])
+            changed = True
+            while changed:
+                changed = False
+                for i, o in enumerate(segs):
+                    if o["nodes"][0] == nodes[-1]:
+                        nodes += o["nodes"][1:]; pts += o["pts"][1:]
+                    elif o["nodes"][-1] == nodes[-1]:
+                        nodes += o["nodes"][-2::-1]; pts += o["pts"][-2::-1]
+                    elif o["nodes"][-1] == nodes[0]:
+                        nodes = o["nodes"][:-1] + nodes; pts = o["pts"][:-1] + pts
+                    elif o["nodes"][0] == nodes[0]:
+                        nodes = o["nodes"][::-1][:-1] + nodes; pts = o["pts"][::-1][:-1] + pts
+                    else:
+                        continue
+                    segs.pop(i); changed = True
+                    break
+            L = sum(math.dist(a, b) for a, b in zip(pts, pts[1:]))
+            chains.append((L, pts))
+        chains.sort(key=lambda c: -c[0])
+        best = chains[0]
+        merged.append(dict(name=name, pts=best[1], w=segs and 0 or by_name[name][0]["w"],
+                           bridge=by_name[name][0]["bridge"], fragments=len(chains) - 1,
+                           length=best[0]))
+    return merged
+
+
+def _dist_to_segment(p, a, b):
+    (px, py), (ax, ay), (bx, by) = p, a, b
+    dx, dy = bx - ax, by - ay
+    if dx == dy == 0:
+        return math.hypot(px - ax, py - ay)
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
+
+def fit_two_segments(pts, tol):
+    """Règle 1 : redresse une polyligne (cases continues) en une droite ou un L
+    (deux segments à angle droit). Renvoie (forme, segments, écart) ou None si
+    l'écart maximal dépasse tol. Les segments sont en cases entières."""
+    n = len(pts)
+    xs = [p[0] for p in pts]; ys = [p[1] for p in pts]
+    best = None
+    # droite horizontale ou verticale
+    for horiz in (True, False):
+        if horiz:
+            c = sum(ys) / n; a, b = (min(xs), c), (max(xs), c)
+        else:
+            c = sum(xs) / n; a, b = (c, min(ys)), (c, max(ys))
+        dev = max(_dist_to_segment(p, a, b) for p in pts)
+        if best is None or dev < best[2]:
+            best = ("droite", [(a, b)], dev)
+    if best[2] <= FIT_TOL_STREET:
+        form, segs, dev = best                  # une droite suffit
+    else:
+        # L : coupure en k, première jambe sur un axe, seconde sur l'autre ;
+        # on garde le meilleur des deux (droite ou L), puis on applique tol
+        bestL = None
+        for k in range(1, n - 1):
+            for first_h in (True, False):
+                p1, p2 = pts[:k + 1], pts[k:]
+                if first_h:
+                    y1 = sum(p[1] for p in p1) / len(p1); x2 = sum(p[0] for p in p2) / len(p2)
+                    corner = (x2, y1)
+                    a, b = (pts[0][0], y1), (x2, pts[-1][1])
+                else:
+                    x1 = sum(p[0] for p in p1) / len(p1); y2 = sum(p[1] for p in p2) / len(p2)
+                    corner = (x1, y2)
+                    a, b = (x1, pts[0][1]), (pts[-1][0], y2)
+                dev = max(min(_dist_to_segment(p, a, corner), _dist_to_segment(p, corner, b)) for p in pts)
+                if bestL is None or dev < bestL[2]:
+                    bestL = ("L", [(a, corner), (corner, b)], dev)
+        if bestL is not None and bestL[2] < best[2]:
+            best = bestL
+        if best[2] > tol:
+            return None
+        form, segs, dev = best
+    rounded = [((int(round(a[0])), int(round(a[1]))), (int(round(b[0])), int(round(b[1])))) for a, b in segs]
+    # un segment doit être strictement axial après arrondi
+    fixed = []
+    for (ax, ay), (bx, by) in rounded:
+        if ax != bx and ay != by:
+            if abs(bx - ax) >= abs(by - ay):
+                by = ay
+            else:
+                bx = ax
+        fixed.append(((ax, ay), (bx, by)))
+    if form == "L":   # recoller la seconde jambe au coin arrondi
+        (a0, c0), (c1, b1) = fixed
+        c1 = c0
+        if c1[0] != b1[0] and c1[1] != b1[1]:
+            b1 = (c1[0], b1[1]) if abs(b1[1] - c1[1]) >= abs(b1[0] - c1[0]) else (b1[0], c1[1])
+        fixed = [(a0, c0), (c1, b1)]
+    return form, fixed, dev
+
+
 def stamp_line(grid, a, b, w, ch, allow=None):
     """Trace un segment axial d'épaisseur w (cases). allow(x, y) filtre les cases."""
     (x0, y0), (x1, y1) = a, b
@@ -347,10 +466,11 @@ def collect(parsed, g):
         pts = coords(way)
         closed = len(way["nodes"]) > 3 and way["nodes"][0] == way["nodes"][-1]
         if hw and hw not in SKIP_CLASSES and t.get("area") != "yes" and len(pts) >= 2:
-            keep = hw in MAIN_CLASSES or any(r.search(name) for r in named_re) or name.startswith("Boulevard")
+            keep = any(r.search(name) for r in named_re) or name.startswith("Boulevard")
             if keep:
                 w = BOULEVARD_W if name.startswith("Boulevard") else STREET_W
-                streets.append(dict(name=name, pts=pts, w=w, bridge=t.get("bridge") == "yes" or name.startswith("Pont ")))
+                streets.append(dict(name=name, pts=pts, nodes=[n for n in way["nodes"] if n in nodes], w=w,
+                                    bridge=t.get("bridge") == "yes" or name.startswith("Pont ")))
         if closed and len(pts) >= 4:
             if t.get("natural") == "water" or t.get("water") in ("river", "canal") or t.get("waterway") == "riverbank":
                 water.append(pts)
@@ -467,12 +587,12 @@ def build(osm_path, max_block, rotate="0", verbose=True):
         pts = [p for r in place for p in r]
         xs = [p[0] for p in pts]; ys = [p[1] for p in pts]
         w0, h0 = max(xs) - min(xs), max(ys) - min(ys)
-        scale = max(1.0, PLACE_MIN / max(w0, h0, 1))
-        w = int(round(min(PLACE_MAX, max(w0 * scale, PLACE_MIN)))); h = int(round(max(6, min(PLACE_MAX, h0 * scale))))
+        w, h = PLACE_W, PLACE_H
         x, y, w, h = centered_rect((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2, w, h)
-        # laisser 4 cases entre la place et la rive pour la rangée de maisons sur l'Agout
+        # laisser RING_D cases entre la place et la rive : l'îlot est de la
+        # ceinture, c'est la rangée de maisons sur l'Agout
         banks = [next((xx for xx in range(COLS) if grid[yy][xx] in "wq"), COLS) for yy in range(y, y + h)]
-        x = max(0, min(x, min(banks) - 4 - w))
+        x = max(0, min(x, min(banks) - RING_D - w))
         place_rect = (x, y, w, h)
         say(f"place Jean-Jaurès : {w0:.0f} × {h0:.0f} cases réelles → {w} × {h}")
     else:
@@ -480,31 +600,88 @@ def build(osm_path, max_block, rotate="0", verbose=True):
 
     # 2. rues redressées ; les ponts passent sur l'eau, les autres s'arrêtent à la rive.
     #    Les cases des rues nommées sont mémorisées : aucun monument ne peut les couvrir.
-    named_mid = {}
     named_mask = [[False] * COLS for _ in range(ROWS)]
-    for st in streets:
-        pts = douglas_peucker(st["pts"], 2.0)
-        cells = [(int(round(x)), int(round(y))) for x, y in pts]
-        cells = [c for i, c in enumerate(cells) if i == 0 or c != cells[i - 1]]
+    kept, dropped = 0, []
+    for st in merge_streets(streets):
+        # on ne garde que la partie de la rue qui traverse la grille (avec une marge)
+        pts = [p for p in st["pts"] if -8 <= p[0] < COLS + 8 and -8 <= p[1] < ROWS + 8]
+        if len(pts) < 2:
+            continue
+        pts = douglas_peucker(pts, 1.0)
+        is_named = st["name"] and any(re.compile(p).search(st["name"]) for p in NAMED_STREETS)
+        # les rues nommées de DECISIONS.md sont toujours gardées, avec leur
+        # meilleur ajustement (Victor Hugo devient un L) ; la tolérance ne
+        # s'applique qu'aux boulevards
+        tol = 1e9 if is_named else FIT_TOL_BOULEVARD
+        fit = fit_two_segments(pts, tol)
+        frag = f", {st['fragments']} fragment(s) ignoré(s)" if st["fragments"] else ""
+        if fit is None:
+            best_dev = min(fit_two_segments(pts, 1e9)[2], 999)
+            dropped.append(st["name"])
+            say(f"  rue supprimée : {st['name']} (ni droite ni L à {tol} cases près, écart {best_dev:.1f}){frag}")
+            continue
+        form, segs, dev = fit
         allow = None if st["bridge"] else (lambda x, y: grid[y][x] not in "w")
         is_named = st["name"] and any(re.compile(p).search(st["name"]) for p in NAMED_STREETS[:6])
-        for a, b in zip(cells, cells[1:]):
-            for p, q in rectify(a, b):
-                stamp_line(grid, p, q, st["w"], "r", allow)
-                if is_named:
-                    stamp_line(named_mask, p, q, st["w"], True)
+        if dev > FIT_TOL_STREET and is_named:
+            say(f"  (rue nommée gardée malgré un écart de {dev:.1f} cases : {st['name']})")
+        for a, b in segs:
+            stamp_line(grid, a, b, st["w"], "r", allow)
+            if is_named:
+                stamp_line(named_mask, a, b, st["w"], True)
+        kept += 1
+        say(f"  rue {form:6s} {st['name']} ({st['w']} cases, écart {dev:.1f}){frag}")
         if is_named:
-            mid = cells[len(cells) // 2]
-            named_mid.setdefault(st["name"], []).append(mid)
-    for name, mids in named_mid.items():
-        mx = sum(m[0] for m in mids) // len(mids); my = sum(m[1] for m in mids) // len(mids)
-        labels.append(dict(text=name, x=max(0, min(COLS - 1, mx)), y=max(0, min(ROWS - 1, my))))
+            a, b = segs[0]
+            mid = ((a[0] + b[0]) // 2, (a[1] + b[1]) // 2) if form == "droite" else segs[0][1]
+            labels.append(dict(text=st["name"], x=max(0, min(COLS - 1, mid[0])), y=max(0, min(ROWS - 1, mid[1]))))
+    say(f"réseau : {kept} rues conservées, {len(dropped)} supprimée(s)")
     say(f"après les rues : rues + places + parcs = {100 * sum(1 for r in grid for c in r if c in OPEN) / (COLS * ROWS):.1f} %")
     # 3c. la place par-dessus les rues (les rues y débouchent, elles ne la traversent pas)
+    ring_blocks = []
     if place_rect:
         x, y, w, h = place_rect
         fill_rect(grid, x, y, w, h, "p", allow=lambda x, y: grid[y][x] not in "wq")
         labels.append(dict(text="Place Jean-Jaurès", x=x + w // 2 - 4, y=y + h // 2))
+        # 3d. ceinture d'îlots accolés (règle 3), trouées de GAP_W en moulinet
+        D, G_ = RING_D, GAP_W
+        ring_blocks = [
+            dict(x=x + G_, y=y - D, w=w - G_ + D, h=D),            # nord (jusqu'au coin NE inclus)
+            dict(x=x + w, y=y + G_, w=D, h=h - G_ + D),            # est (jusqu'au coin SE inclus)
+            dict(x=x - D, y=y + h, w=w - G_ + D, h=D),             # sud (jusqu'au coin SW inclus)
+            dict(x=x - D, y=y - D, w=D, h=h - G_ + D),             # ouest (jusqu'au coin NW inclus)
+        ]
+        exits = [
+            dict(x=x, y=y - D, w=G_, h=D, dx=0, dy=-1),           # NW → nord
+            dict(x=x + w, y=y, w=D, h=G_, dx=1, dy=0),            # NE → est
+            dict(x=x + w - G_, y=y + h, w=G_, h=D, dx=0, dy=1),   # SE → sud
+            dict(x=x - D, y=y + h - G_, w=D, h=G_, dx=-1, dy=0),  # SW → ouest
+        ]
+        for b in ring_blocks:
+            fill_rect(grid, b["x"], b["y"], b["w"], b["h"], "I", allow=lambda x, y: grid[y][x] not in "wq")
+            for yy in range(b["y"], b["y"] + b["h"]):
+                for xx in range(b["x"], b["x"] + b["w"]):
+                    if inside(xx, yy):
+                        protected[yy][xx] = True
+        for e in exits:
+            fill_rect(grid, e["x"], e["y"], e["w"], e["h"], "r", allow=lambda x, y: grid[y][x] not in "wq")
+            # prolonger la trouée jusqu'à la première rue, eau ou bord de grille
+            ex, ey = e["x"], e["y"]
+            for step in range(1, 40):
+                nx, ny = ex + e["dx"] * step * (e["w"] if e["dx"] else 0), ey + e["dy"] * step * (e["h"] if e["dy"] else 0)
+                cells_ = [(xx, yy) for yy in range(ny, ny + e["h"]) for xx in range(nx, nx + e["w"])]
+                if not any(inside(xx, yy) for xx, yy in cells_):
+                    break
+                if any(inside(xx, yy) and grid[yy][xx] in "rwq" for xx, yy in cells_):
+                    # on rejoint une rue ou la rive : on remplit jusqu'à elle et on s'arrête
+                    for xx, yy in cells_:
+                        if inside(xx, yy) and grid[yy][xx] in ".I":
+                            grid[yy][xx] = "r"
+                    break
+                for xx, yy in cells_:
+                    if inside(xx, yy):
+                        grid[yy][xx] = "r"
+        say(f"place ceinturée : 4 îlots de {D} cases de profondeur, trouées de {G_} cases aux angles (moulinet)")
 
     # 4. monuments : centre OSM, puis décalage jusqu'à ne chevaucher ni l'eau,
     #    ni la place, ni un monument déjà posé (le jardin est posé en premier)
@@ -550,8 +727,10 @@ def build(osm_path, max_block, rotate="0", verbose=True):
     for mid_, pattern, (w, h), levels in MONUMENTS:
         if mid_ == "theatre" and place_rect:
             px, py, pw, ph = place_rect
+            h = min(h, RING_D)
             boxes[mid_] = put(mid_, px + THEATRE_FROM_PLACE["dx"] + w / 2, py + ph + THEATRE_FROM_PLACE["dy"] + h / 2, w, h, "I", levels,
-                              f"coin sud-ouest de la place, décalage explicite {THEATRE_FROM_PLACE}", avoid_named=False)
+                              f"îlot sud de la ceinture, extrémité ouest, façade sur la place, décalage explicite {THEATRE_FROM_PLACE}",
+                              avoid_named=False)
             continue
         if mid_ == "eveche" and "saint-benoit" in boxes:
             cb = boxes["saint-benoit"]
@@ -602,7 +781,8 @@ def build(osm_path, max_block, rotate="0", verbose=True):
                 banks[yy] = b
         # rangée alignée : x = rive minimale - 4 ; ligne valide si ses 4 cases sont libres
         x = min(banks.values()) - 4 if banks else None
-        ok = lambda yy: yy in banks and all(grid[yy][xx] not in "pwq" for xx in range(x, x + 4)) \
+        # lignes valides : 4 cases libres (ni place, ni eau, ni rue = trouée de la ceinture)
+        ok = lambda yy: yy in banks and all(grid[yy][xx] not in "prwq" for xx in range(x, x + 4)) \
             and not any(overlaps(dict(x=x, y=yy, w=4, h=1), b) for b in placed)
         best, run = None, []
         for yy in range(y0, y1 + 1):
@@ -642,27 +822,49 @@ def build(osm_path, max_block, rotate="0", verbose=True):
         land = sum(1 for row in grid for c in row if c != "w")
         return 100 * n / max(1, land)
 
+    cut_list = []      # chaque coupe : liste de cases passées en rue
+
     def cut_blocks(limit):
+        """Découpes strictement nécessaires : pour une étendue w > limit, le
+        nombre minimal de rues de INNER_W cases est ceil((w - limit) / (limit + INNER_W)),
+        réparties régulièrement. Répété tant qu'il reste une composante trop grande."""
         cuts = 0
-        for _ in range(60):
+        for _ in range(30):
             big = [c for c in components(grid, "I", protected) if max(bbox_of(c)[2:]) > limit]
             if not big:
                 break
             for cells in big:
                 x, y, w, h = bbox_of(cells)
-                cs = set(cells)
-                if w >= h:
-                    xm = x + w // 2 - INNER_W // 2
-                    for (cx, cy) in cells:
-                        if xm <= cx < xm + INNER_W:
+                for horiz_extent, start, size in ((True, x, w), (False, y, h)):
+                    if size <= limit:
+                        continue
+                    n = math.ceil((size - limit) / (limit + INNER_W))
+                    piece = (size - INNER_W * n) / (n + 1)
+                    for i in range(1, n + 1):
+                        c0 = start + int(round(i * piece + (i - 1) * INNER_W))
+                        cut = [(cx, cy) for (cx, cy) in cells if c0 <= (cx if horiz_extent else cy) < c0 + INNER_W]
+                        for cx, cy in cut:
                             grid[cy][cx] = "r"
-                else:
-                    ym = y + h // 2 - INNER_W // 2
-                    for (cx, cy) in cells:
-                        if ym <= cy < ym + INNER_W:
-                            grid[cy][cx] = "r"
-                cuts += 1
+                        cut_list.append(cut); cuts += 1
         return cuts
+
+    def merge_blocks(limit):
+        """Fusion d'îlots (règle 2) : retire les coupes dont la suppression ne
+        crée pas d'îlot > limit, tant que le vide hors eau dépasse SHARE_LAND_MAX."""
+        removed = 0
+        for cut in sorted(cut_list, key=len):
+            if share_land() <= SHARE_LAND_MAX:
+                break
+            for cx, cy in cut:
+                grid[cy][cx] = "I"
+            ok = all(max(bbox_of(c)[2:]) <= limit for c in components(grid, "I", protected)
+                     if any((cx, cy) in set(c) for cx, cy in cut[:1]))
+            if ok:
+                removed += 1
+            else:
+                for cx, cy in cut:
+                    grid[cy][cx] = "r"
+        return removed
 
     def clean_slivers():
         n = 0
@@ -675,16 +877,19 @@ def build(osm_path, max_block, rotate="0", verbose=True):
         return n
 
     limit = max_block
-    while True:
-        cuts = cut_blocks(limit)
-        sl = clean_slivers()
-        s = share()
-        say(f"découpe des îlots > {limit} cases : {cuts} coupe(s), {sl} éclat(s) absorbé(s) → rues + places + parcs = {s:.1f} %")
-        if s >= TARGET_SHARE or limit <= 6:
-            break
-        limit -= 2
+    say(f"avant découpe : {share():.1f} % de la grille, {share_land():.1f} % hors eau")
+    cuts = cut_blocks(limit)
+    sl = clean_slivers()
+    say(f"découpe des îlots > {limit} cases : {cuts} coupe(s) de {INNER_W} cases, {sl} éclat(s) absorbé(s) → "
+        f"{share():.1f} % de la grille, {share_land():.1f} % hors eau")
+    if share_land() > SHARE_LAND_MAX:
+        removed = merge_blocks(limit)
+        say(f"fusion d'îlots : {removed} coupe(s) retirée(s) → {share_land():.1f} % hors eau")
+    s = share()
+    verdict = ("dans l'objectif" if SHARE_LAND_MIN <= share_land() <= SHARE_LAND_MAX
+               else "ATTENTION : hors objectif, à arbitrer (largeur des rues ou seuil des îlots)")
     say(f"part rues + places + parcs : {s:.1f} % de la grille, {share_land():.1f} % hors eau "
-        f"(objectif ≥ {TARGET_SHARE:.0f} %), îlots ≤ {limit} cases de côté, rues intérieures {INNER_W} cases")
+        f"(objectif {SHARE_LAND_MIN:.0f}–{SHARE_LAND_MAX:.0f} % hors eau) → {verdict} ; îlots ≤ {limit}, rues intérieures {INNER_W}")
 
     layout = dict(cols=COLS, rows=ROWS, cell_cm=1.0, cells="\n".join("".join(r) for r in grid),
                   legend=LEGEND, monuments=monuments, labels=labels,

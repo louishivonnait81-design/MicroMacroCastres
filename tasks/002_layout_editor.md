@@ -26,6 +26,10 @@ Un fichier `tools/layout-editor/index.html` (sans serveur, sans dépendance rés
    b. couper tout îlot de plus de 12 cases de côté par une rue intérieure de 3 cases ;
    c. répéter a–b jusqu'à ce que rues + places + parcs représentent au moins 33 % de la grille.
    Le périmètre et le facteur sont fixés par `DECISIONS.md` ; on ne les rediscute pas ici.
+   **Règles ajoutées le 15/09 (Louis)** :
+   - *Rues* : aucune rue en escalier. Chaque rue redressée est au plus deux segments droits avec un coude à angle droit (droite ou L, Victor Hugo devient un L). Les tronçons OSM d'une même rue sont fusionnés d'abord. Un boulevard qui ne tient pas en deux segments à 6 cases près est supprimé et signalé ; les cinq rues nommées sont toujours gardées.
+   - *Réseau* : on ne garde que les boulevards (6 cases), les cinq rues nommées (4 cases), les ponts, et les découpes strictement nécessaires pour qu'aucun îlot ne dépasse 12 cases (rues intérieures de 3 cases, nombre minimal, réparties régulièrement). Tout le reste, y compris les rues « principales » d'OSM, est supprimé. Objectif de vide hors eau : 35–40 %. Au-dessus de 40 %, on retire les coupes dont la suppression ne crée pas d'îlot > 12.
+   - *Place* : la place Jean-Jaurès fait 18 × 8, à 6 cases de la rive. Elle est bordée d'îlots accolés sur ses quatre côtés, façades sur la place, le théâtre (7 × 6) étant l'îlot sud à son extrémité ouest. Les rues n'y débouchent que par quatre trouées de 4 cases aux angles, en moulinet (NW → nord, NE → est, SE → sud, SW → ouest), prolongées jusqu'à la première rue ; aucune rue ne longe la place.
 4. Poser `p` (place Jean-Jaurès), `P` (jardin), `w` (Agout, largeur 8–12 cases), `q` (quais, 2 cases le long de l'eau) d'après les polygones OSM, redressés.
 5. Réserver les rectangles des monuments de `DECISIONS.md` (position d'après OSM `name`).
 6. Écrire `data/layout.json` + un PNG de contrôle en couleurs `out/layout_preview.png` (une couleur par type, monuments hachurés, grille A–G / 1–4 en marge, facteur de compression et pourcentage rues + places + parcs affichés dans la marge).
