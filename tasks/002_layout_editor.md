@@ -5,8 +5,8 @@ Un fichier `tools/layout-editor/index.html` (sans serveur, sans dépendance rés
 
 ## Entrées
 - `DECISIONS.md` (dimensions de la grille, échelles, périmètre, monuments)
-- `data/castres.osm` (export OpenStreetMap de la zone, fourni par Louis)
-- `data/fond_castres.png` (capture d'écran de la carte de la zone, fournie par Louis)
+- `data/castres.osm` (export OpenStreetMap de la zone : `python3 pipeline/00a_fetch_osm.py` sur le Mac, ou export manuel depuis overpass-turbo.eu avec la requête de `--print-query` ; le réseau de Claude Code cloud refuse Overpass)
+- `data/fond_castres.png` + `data/fond_castres.json` (fond de l'éditeur généré par `python3 pipeline/00b_osm_to_fond.py` : rues, bâtiments, rivière en gris clair, avec son géoréférencement ; remplace la capture d'écran)
 
 ## Format `layout.json`
 ```json

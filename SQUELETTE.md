@@ -42,11 +42,14 @@ micromacro-castres/
     layout-editor/       phase 1 — peindre la grille (web, un fichier html)
     placer/              phase 5 — placer sprites et personnages (web)
   pipeline/
+    00a_fetch_osm.py         Overpass → data/castres.osm (à lancer hors du cloud)
+    00b_osm_to_fond.py       castres.osm → fond_castres.png (fond gris de l'éditeur)
+    00_osm_to_layout.py      castres.osm → layout.json (brouillon, fiche 002)
     01_layout_to_blocks.py   layout.json → blocks.json (volumes)
     02_build_blender.py      blocks.json → scène + rendu (blender -b)
     03_assemble_svg.py       squelette + monuments + calques → carte.svg
   data/
-    fond_castres.png     carte réelle en fond de l'éditeur
+    fond_castres.png     carte réelle en fond de l'éditeur (généré depuis castres.osm par 00b_osm_to_fond.py)
     layout.json
     blocks.json
   library/

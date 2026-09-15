@@ -21,7 +21,7 @@ Commence par tasks/001_environnement.md. Confirme d'abord en trois lignes ce que
 ## Message 2 : après la fiche 001 validée
 
 ```
-Fiche 001 validée. Passe à tasks/002. Les fichiers data/castres.osm et data/fond_castres.png sont dans le repo. Le facteur de compression (mètres → cases) doit faire tenir le périmètre de DECISIONS.md dans 106 × 71 cases avec des rues de 3 cases minimum ; affiche le facteur obtenu. S'il descend sous 0,55, propose-moi deux périmètres légèrement réduits avec leur PNG de contrôle et arrête-toi.
+Fiche 001 validée. Passe à tasks/002. Le fichier data/castres.osm est dans le repo ; génère le fond avec pipeline/00b_osm_to_fond.py. Le facteur de compression (mètres → cases) doit faire tenir le périmètre de DECISIONS.md dans 106 × 71 cases avec des rues de 3 cases minimum ; affiche le facteur obtenu. S'il descend sous 0,55, propose-moi deux périmètres légèrement réduits avec leur PNG de contrôle et arrête-toi.
 ```
 
 ## Message 3 : à chaque nouvelle fiche
@@ -35,7 +35,7 @@ Fiche 00X validée [+ éventuellement : voici mes choix / corrections]. Passe à
 | Quand | Quoi | Où |
 |---|---|---|
 | avant message 1 | DECISIONS.md complété (rues, lieux à histoires, monuments) | racine |
-| avant message 2 | export OSM de la zone (`castres.osm`) et capture de carte (`fond_castres.png`) | data/ |
+| avant message 2 | export OSM de la zone (`castres.osm`), via `python3 pipeline/00a_fetch_osm.py` sur le Mac ou overpass-turbo.eu ; le fond `fond_castres.png` est ensuite généré par `00b_osm_to_fond.py` | data/ |
 | fiche 003 | corrections du layout dans l'éditeur, export de layout.json | data/ |
 | fiche 006 | verdict sur l'impression A3 et choix d'orientation / trait | en message |
 | fiche 007 | images de monuments faites dans Gemini | inbox/ |
