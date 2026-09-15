@@ -1183,7 +1183,9 @@ def build(osm_path, rotate=None, core=None, verbose=True):
         f"{sum(1 for s_ in sizes if s_ > 12)} îlot(s) de plus de 12 cases (information)")
     say(f"vide (voies + place + parcs) : {share:.1f} % de la grille, {share_land:.1f} % hors eau (information)")
 
-    layout = dict(cols=COLS, rows=ROWS, cell_cm=1.0, cells="\n".join("".join(r) for r in grid), dropped=log_dropped,
+    streets_index = [dict(name=st["name"], kind=st["kind"], w=st["w"], decisions=st["decisions"],
+                          cells=sorted(st["cells"])) for st in streets]
+    layout = dict(cols=COLS, rows=ROWS, cell_cm=1.0, cells="\n".join("".join(r) for r in grid), dropped=log_dropped, streets_index=streets_index,
                   legend=LEGEND, monuments=monuments, labels=labels,
                   background=dict(x=0, y=0, w=COLS, opacity=0.5, name="fond_castres_grille.png"),
                   meta=dict(factor=round(g.f, 4), angle=round(g.angle, 2), center=dict(lat=g.clat, lon=g.clon),
@@ -1315,6 +1317,10 @@ def main():
     layout, g, log = build(a.osm, a.rotate, core)
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     dropped = layout.pop("dropped")
+    streets_index = layout.pop("streets_index")
+    with open(os.path.join(os.path.dirname(a.out) or ".", "streets_index.json"), "w", encoding="utf-8") as f:
+        json.dump(streets_index, f, ensure_ascii=False)
+    print(f"écrit {os.path.join(os.path.dirname(a.out) or '.', 'streets_index.json')} ({len(streets_index)} voies)")
     if a.dropped:
         os.makedirs(os.path.dirname(a.dropped) or ".", exist_ok=True)
         with open(a.dropped, "w", encoding="utf-8") as f:

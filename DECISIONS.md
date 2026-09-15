@@ -48,7 +48,7 @@ Rues nommées (largeur 4) : rue Sabatier, rue Frédéric Thomas / Victor Hugo, r
 
 Lieux à histoires (10) :
 1. le marché sur la place Jean-Jaurès
-2. une terrasse de café sur la place, face au théâtre
+2. une terrasse de café sur la place (Le Glacier, angle nord-ouest ; le théâtre n'est pas sur la place)
 3. le coche d'eau sur l'Agout, avec la file à l'embarcadère
 4. le jardin de l'Évêché, jardiniers et promeneurs
 5. les balcons des maisons sur l'Agout, linge et pêcheurs
@@ -58,7 +58,9 @@ Lieux à histoires (10) :
 9. un chantier de ravalement avec échafaudage
 10. le rugby **dans les personnages** : supporters en maillot, joueur boueux, troisième mi-temps au café — pas de stade.
 
-Tout ce qui n'est pas dans cette liste est simplifié ou omis.
+Tout ce qui n'est pas dans cette liste est simplifié ou omis. Les labels des dix lieux sont dans `data/layout.json` (★ d'après OSM, ★? devinés : embarcadère du coche d'eau, garage, chantier).
+
+Réseau figé le 18/09 (porte de la fiche 003 passée : deux oui). Plus de régénération de `data/layout.json` sans accord de Louis.
 
 ## Monuments (emprise réelle OSM compressée, +30 % dans les îlots voisins)
 
@@ -67,7 +69,7 @@ Tout ce qui n'est pas dans cette liste est simplifié ou omis.
 | saint-benoit | cathédrale Saint-Benoît | 46 | 60 | 3 + clocher 6 |
 | eveche-mairie | palais de l'Évêché = hôtel de ville et musée Goya (OSM : « Hôtel de Ville de Castres ») | 65 | 84 | 3 |
 | jardin-eveche | jardin de l'Évêché | 300 | 390 | — |
-| theatre | théâtre municipal | 31 | 40 | 3 + fronton |
+| theatre | théâtre municipal (à sa vraie position, près de la rue de l'Évêché, au sud-ouest du jardin) | 31 | 40 | 3 + fronton |
 | saint-jacques | église Saint-Jacques de Villegoudou | 30 | 39 | 3 + clocher |
 | maisons-agout | maisons sur l'Agout (rive gauche entre les ponts) | 58 | 58 | 3 |
 | pont-vieux, pont-neuf | Pont Vieux et Pont Neuf | voies de 4 cases d'une rive à l'autre | — | — |
