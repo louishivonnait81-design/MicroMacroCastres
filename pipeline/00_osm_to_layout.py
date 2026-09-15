@@ -361,6 +361,24 @@ def fit_two_segments(pts, tol):
     return form, fixed, dev
 
 
+def stamped_cells(a, b, w):
+    """Cases couvertes par un segment axial d'épaisseur w (sans les écrire)."""
+    (x0, y0), (x1, y1) = a, b
+    lo = -(w // 2); hi = lo + w
+    out = []
+    if y0 == y1:
+        for x in range(min(x0, x1), max(x0, x1) + 1):
+            for d in range(lo, hi):
+                if inside(x, y0 + d):
+                    out.append((x, y0 + d))
+    else:
+        for y in range(min(y0, y1), max(y0, y1) + 1):
+            for d in range(lo, hi):
+                if inside(x0 + d, y):
+                    out.append((x0 + d, y))
+    return out
+
+
 def stamp_line(grid, a, b, w, ch, allow=None):
     """Trace un segment axial d'épaisseur w (cases). allow(x, y) filtre les cases."""
     (x0, y0), (x1, y1) = a, b
@@ -450,25 +468,38 @@ def bbox_of(cells):
 # ---------------------------------------------------------------------------
 # Réseau réel (règles du 16/09) : classement et largeur des voies
 # ---------------------------------------------------------------------------
+BIG_BOULEVARDS = [r"Boulevard Léon Bourgeois", r"Boulevard Miredames", r"Boulevard Henri Sizaire"]
+
+
 def classify(tags, name):
-    """Caractère de la voie → (largeur en cases, lettre de la grille).
-    venelle 1, ruelle 2, rue 3, rue nommée de DECISIONS 4, boulevard / quai 6 ('b',
-    plantés d'arbres). Renvoie None si la voie n'est pas une voie (arrêt de bus…)."""
+    """Caractère de la voie → dict(w, ch, kind, named) ou (None, raison) si la
+    voie est écartée d'office (règle 1) :
+    venelle 1, ruelle 2, rue 3, rue nommée / avenue / voie primaire 4,
+    boulevards Léon Bourgeois, Miredames, Henri Sizaire et quais 6 ('b')."""
     hw = tags.get("highway")
     if hw in SKIP_CLASSES or hw is None:
-        return None
-    if hw == "service" and tags.get("service") in ("parking_aisle", "driveway", "drive-through"):
-        return None
+        return None, f"highway={hw}"
+    if hw == "footway" and tags.get("footway") in ("sidewalk", "crossing"):
+        return None, f"footway={tags.get('footway')} (trottoir / passage piéton)"
+    if hw == "service" and not name:
+        return None, "service non nommée (accès, parking, livraison)"
+    if hw in ("path", "cycleway"):
+        return None, f"highway={hw}"
+    if hw == "steps" and not name:
+        return None, "escalier non nommé"
     first = name.split(" ")[0] if name else ""
-    if any(re.compile(p).search(name) for p in NAMED_STREETS):
-        return (STREET_W, "r")
-    if first in ("Boulevard", "Quai", "Allées", "Avenue") or hw in ("primary", "secondary", "primary_link", "secondary_link"):
-        return (BOULEVARD_W, "b")
-    if first in ("Venelle", "Passage", "Escalier", "Rampe") or hw in ("footway", "steps", "path", "cycleway"):
-        return (1, "r")
+    named = any(re.compile(p).search(name) for p in NAMED_STREETS)
+    if any(re.compile(p).search(name) for p in BIG_BOULEVARDS) or first == "Quai":
+        return dict(w=BOULEVARD_W, ch="b", kind="boulevard / quai 6", named=True), None
+    if named:
+        return dict(w=STREET_W, ch="r", kind="rue nommée 4", named=True), None
+    if first in ("Boulevard", "Avenue", "Allées") or hw in ("primary", "secondary", "primary_link", "secondary_link"):
+        return dict(w=STREET_W, ch="r", kind="avenue / voie primaire 4", named=bool(name)), None
+    if first in ("Venelle", "Passage", "Escalier", "Rampe") or hw in ("footway", "steps"):
+        return dict(w=1, ch="r", kind="venelle 1", named=bool(name)), None
     if first in ("Ruelle", "Impasse") or hw in ("living_street", "service"):
-        return (2, "r")
-    return (3, "r")          # rue ordinaire : residential, tertiary, unclassified, pedestrian…
+        return dict(w=2, ch="r", kind="ruelle 2", named=bool(name)), None
+    return dict(w=3, ch="r", kind="rue 3", named=bool(name)), None
 
 
 def rectify_manhattan(pts, min_run=8, band=2.0):
@@ -545,6 +576,7 @@ def collect(parsed, g):
         return [g.cell(nodes[n]) for n in way["nodes"] if n in nodes]
 
     streets, water, parks, place, jardin = [], [], [], [], []
+    dropped = []               # (nom ou type, raison) — règle 1
     features = {}
     for wid, way in ways.items():
         t = way["tags"]
@@ -553,11 +585,15 @@ def collect(parsed, g):
         pts = coords(way)
         closed = len(way["nodes"]) > 3 and way["nodes"][0] == way["nodes"][-1]
         is_area = t.get("area") == "yes" or (hw == "pedestrian" and closed)
-        if hw and not is_area and len(pts) >= 2:
-            c = classify(t, name)
-            if c and any(-2 <= p[0] < COLS + 2 and -2 <= p[1] < ROWS + 2 for p in pts):
-                streets.append(dict(id=wid, name=name, hw=hw, pts=pts, nodes=[n for n in way["nodes"] if n in nodes],
-                                    w=c[0], ch=c[1], bridge=t.get("bridge") == "yes" or name.startswith("Pont ")))
+        if hw and not is_area and len(pts) >= 2 and any(-2 <= p[0] < COLS + 2 and -2 <= p[1] < ROWS + 2 for p in pts):
+            c, why = classify(t, name)
+            label = name or f"({hw} sans nom)"
+            if c is None:
+                dropped.append((label, why))
+            else:
+                streets.append(dict(id=wid, name=name, label=label, hw=hw, pts=pts,
+                                    nodes=[n for n in way["nodes"] if n in nodes], **c,
+                                    bridge=t.get("bridge") == "yes" or name.startswith("Pont ")))
         if closed and len(pts) >= 4:
             if t.get("natural") == "water" or t.get("water") in ("river", "canal") or t.get("waterway") == "riverbank":
                 water.append(pts)
@@ -581,7 +617,7 @@ def collect(parsed, g):
         if name:
             for r in rings:
                 features.setdefault(name, []).append((r, True, t))
-    return streets, water, parks, place, jardin, features, nodes
+    return streets, water, parks, place, jardin, features, nodes, dropped
 
 
 def feature_center(features, pattern):
@@ -620,7 +656,7 @@ def line_cells(a, b):
 # ---------------------------------------------------------------------------
 # Construction du brouillon
 # ---------------------------------------------------------------------------
-def build(osm_path, rotate="auto", verbose=True):
+def build(osm_path, rotate="auto", protect="osm", verbose=True):
     log = []
 
     def say(*a):
@@ -644,12 +680,11 @@ def build(osm_path, rotate="auto", verbose=True):
     say(f"facteur de compression : {g.f:.4f} case/m (1 case = {1 / g.f:.1f} m) ; "
         f"périmètre {g.perim_w_m:.0f} × {g.h_m:.0f} m → {g.perim_w_m * g.f:.0f} × {ROWS} cases, "
         f"marge est {COLS - g.perim_w_m * g.f:.0f} cases ; grille tournée de {g.angle:+.2f}°")
-    streets, water, parks, place, jardin, features, nodes = collect(parsed, g)
+    streets, water, parks, place, jardin, features, nodes, dropped = collect(parsed, g)
     from collections import Counter
-    kinds = Counter((st["w"], st["ch"]) for st in streets)
-    say(f"OSM : {len(streets)} voies dans la grille — " + ", ".join(
-        f"{n} × {'boulevard/quai 6' if ch == 'b' else {1: 'venelle 1', 2: 'ruelle 2', 3: 'rue 3', 4: 'rue nommée 4'}[w]}"
-        for (w, ch), n in sorted(kinds.items())))
+    kinds = Counter(st["kind"] for st in streets)
+    say(f"OSM : {len(streets) + len(dropped)} voies dans la grille ; {len(dropped)} écartées d'office (règle 1), "
+        f"{len(streets)} candidates — " + ", ".join(f"{n} × {k}" for k, n in sorted(kinds.items())))
 
     grid = [["."] * COLS for _ in range(ROWS)]
     protected = [[False] * COLS for _ in range(ROWS)]
@@ -688,32 +723,114 @@ def build(osm_path, rotate="auto", verbose=True):
     else:
         say("ATTENTION : place Jean-Jaurès introuvable dans l'OSM")
 
-    # 3. toutes les voies (règles 1 et 2) : redressement orthogonal sans escalier,
-    #    largeur selon le caractère, connexions réelles vérifiées aux nœuds partagés
+    # 3. voies : redressement orthogonal (un coude au plus toutes les MIN_RUN
+    #    cases), doublons de trottoir écartés, îlots < 4 cases résorbés en
+    #    supprimant la voie non nommée la moins importante, connexions vérifiées
+    for st in streets:
+        st["decisions"] = st["named"] and (st["kind"] in ("rue nommée 4", "boulevard / quai 6"))
+        if protect == "decisions":
+            st["named"] = st["decisions"]
+        st["segs"] = rectify_manhattan(st["pts"], MIN_RUN, BAND)
+        st["axis"] = [c for a, b in st["segs"] for c in line_cells(a, b)]
+        st["axis"] = [c for i_, c in enumerate(st["axis"]) if i_ == 0 or c != st["axis"][i_ - 1]]
+        st["cells"] = {c for a, b in st["segs"] for c in stamped_cells(a, b, st["w"])}
+    n_bends = sum(max(0, len(st["segs"]) - 1) for st in streets)
+    importance = lambda st: (st["w"], len(st["axis"]))       # venelle avant ruelle avant rue, courte avant longue
+
+    # 3a. doublons : voie non nommée qui longe une autre voie à ≤ 2 cases sur plus
+    #     de la moitié de sa longueur (trottoir, contre-allée)
+    index = {}
+    for st in streets:
+        for c in st["axis"]:
+            index.setdefault(c, set()).add(st["id"])
+    active = []
+    for st in sorted(streets, key=importance):
+        if st["name"]:            # règle 1 : seules les voies sans nom OSM peuvent être des doublons
+            active.append(st); continue
+        close = 0; others = Counter()
+        for (x, y) in st["axis"]:
+            near = set()
+            for dx in range(-2, 3):
+                for dy in range(-2, 3):
+                    near |= index.get((x + dx, y + dy), set())
+            near.discard(st["id"])
+            if near:
+                close += 1
+                for o in near:
+                    others[o] += 1
+        if st["axis"] and close / len(st["axis"]) > 0.5:
+            by_id = {s_["id"]: s_ for s_ in streets}
+            twin = by_id[others.most_common(1)[0][0]]
+            dropped.append((st["label"], f"doublon de trottoir : longe « {twin['label']} » sur {100 * close // len(st['axis'])} % de sa longueur"))
+            for c in st["axis"]:
+                index[c].discard(st["id"])
+        else:
+            active.append(st)
+    streets = active
+
+    # 3b. îlots de moins de 4 cases de côté : on retire la voie non nommée la
+    #     moins importante qui les borde, jusqu'à ce qu'il n'en reste plus
+    def street_layer(streets_):
+        layer = [row[:] for row in grid]
+        if place_rect:
+            fill_rect(layer, *place_rect, "p", allow=lambda x, y: layer[y][x] not in "wq")
+        for st in streets_:
+            allow = (lambda x, y: layer[y][x] not in "p") if st["bridge"] else (lambda x, y: layer[y][x] not in "wp")
+            for a, b in st["segs"]:
+                stamp_line(layer, a, b, st["w"], st["ch"], allow)
+        return layer
+
+    def small_blocks(layer):
+        comps = components(layer, ".", [[False] * COLS for _ in range(ROWS)])
+        return [c for c in comps if min(bbox_of(c)[2:]) < 4]
+
+    stuck = 0
+    for _ in range(400):
+        layer = street_layer(streets)
+        small = small_blocks(layer)
+        if not small:
+            break
+        removed_any = False
+        for cells in small:
+            cs = set(cells)
+            rim = {(x + dx, y + dy) for x, y in cells for dx in (-1, 0, 1) for dy in (-1, 0, 1)} - cs
+            # candidates : voies non protégées dont les cases touchent l'îlot
+            cands = [st for st in streets if not st["named"] and st["cells"] & rim]
+            if not cands:
+                continue
+            victim = min(cands, key=importance)
+            x, y, w, h = bbox_of(cells)
+            dropped.append((victim["label"], f"crée un îlot de {w} × {h} cases en {x},{y}"))
+            streets = [st for st in streets if st["id"] != victim["id"]]
+            removed_any = True
+            break          # une voie à la fois : la grille change
+        if not removed_any:
+            stuck = len(small)
+            break
+    layer = street_layer(streets)
+    small = small_blocks(layer)
+    if small:
+        say(f"ATTENTION : {len(small)} îlot(s) de moins de 4 cases subsistent, bordés uniquement de voies nommées ou d'eau (à corriger dans l'éditeur)")
+
+    # 3c. tracé définitif, masque des voies nommées, labels
     named_mask = [[False] * COLS for _ in range(ROWS)]
     center_cells = {}          # id de voie → cases de l'axe
     node_streets = {}          # nœud OSM → ids des voies qui le contiennent
-    n_bends = 0
     for st in streets:
-        segs = rectify_manhattan(st["pts"], MIN_RUN, BAND)
-        n_bends += max(0, len(segs) - 1)
-        is_named = st["name"] and any(re.compile(p).search(st["name"]) for p in NAMED_STREETS)
         allow = (lambda x, y: grid[y][x] not in "p") if st["bridge"] else (lambda x, y: grid[y][x] not in "wp")
-        cells = []
-        for a, b in segs:
+        for a, b in st["segs"]:
             stamp_line(grid, a, b, st["w"], st["ch"], allow)
-            if is_named or st["ch"] == "b":
+            if st["named"]:
                 stamp_line(named_mask, a, b, st["w"], True)
-            cells += line_cells(a, b)
-        center_cells[st["id"]] = cells
+        center_cells[st["id"]] = st["axis"]
         for nd in st["nodes"]:
             node_streets.setdefault(nd, set()).add(st["id"])
-        if is_named and st["name"] not in [l["text"] for l in labels]:
-            mid = cells[len(cells) // 2]
+        is_decisions = st["decisions"]
+        if is_decisions and st["name"] not in [l["text"] for l in labels] and st["axis"]:
+            mid = st["axis"][len(st["axis"]) // 2]
             if inside(*mid):
                 labels.append(dict(text=st["name"], x=mid[0], y=mid[1]))
     by_id = {st["id"]: st for st in streets}
-    # connexions : à chaque nœud partagé, les axes redressés doivent se toucher
     connectors = 0
     for nd, ids in node_streets.items():
         if len(ids) < 2 or nd not in nodes:
@@ -724,19 +841,22 @@ def build(osm_path, rotate="auto", verbose=True):
         near = []
         for sid in ids:
             cells = center_cells[sid]
-            if not cells:
-                continue
-            best = min(cells, key=lambda c: (c[0] - c0[0]) ** 2 + (c[1] - c0[1]) ** 2)
-            near.append((sid, best))
+            if cells:
+                near.append((sid, min(cells, key=lambda c: (c[0] - c0[0]) ** 2 + (c[1] - c0[1]) ** 2)))
         for (sa, a), (sb, b) in zip(near, near[1:]):
             reach = (by_id[sa]["w"] + by_id[sb]["w"]) / 2 + 1
             if max(abs(a[0] - b[0]), abs(a[1] - b[1])) > reach:
                 mid = (b[0], a[1])
-                for p, q in ((a, mid), (mid, b)):
-                    stamp_line(grid, p, q, 1, "r", lambda x, y: grid[y][x] in ".I")
+                for p_, q_ in ((a, mid), (mid, b)):
+                    stamp_line(grid, p_, q_, 1, "r", lambda x, y: grid[y][x] in ".I")
                 connectors += 1
+    kinds = Counter(st["kind"] for st in streets)
+    say(f"voies conservées : {len(streets)} — " + ", ".join(f"{n} × {k}" for k, n in sorted(kinds.items())))
     say(f"voies redressées : {n_bends} coudes au total (≥ {MIN_RUN} cases entre deux coudes), "
         f"{connectors} raccord(s) d'une case ajouté(s) pour garder les connexions réelles")
+    reasons = Counter(r.split(" :")[0].split(" (")[0] for _, r in dropped)
+    say(f"VOIES SUPPRIMÉES ({len(dropped)}), par raison : " + ", ".join(f"{k} {n}" for k, n in reasons.most_common()))
+    log_dropped = [f"{lab} — {why}" for lab, why in dropped]
     # la place est une surface pavée : elle prime sur les voies qui la traversent
     if place_rect:
         x, y, w, h = place_rect
@@ -882,7 +1002,7 @@ def build(osm_path, rotate="auto", verbose=True):
         f"{sum(1 for s_ in sizes if s_ > 12)} îlot(s) de plus de 12 cases (information)")
     say(f"vide (voies + place + parcs) : {share:.1f} % de la grille, {share_land:.1f} % hors eau (information)")
 
-    layout = dict(cols=COLS, rows=ROWS, cell_cm=1.0, cells="\n".join("".join(r) for r in grid),
+    layout = dict(cols=COLS, rows=ROWS, cell_cm=1.0, cells="\n".join("".join(r) for r in grid), dropped=log_dropped,
                   legend=LEGEND, monuments=monuments, labels=labels,
                   background=dict(x=0, y=0, w=COLS, opacity=0.5, name="fond_castres_grille.png"),
                   meta=dict(factor=round(g.f, 4), angle=round(g.angle, 2), center=dict(lat=g.clat, lon=g.clon),
@@ -942,7 +1062,7 @@ def preview(layout, path, log, cell=20, margin=70):
         d.text((x, y), l["text"], fill=(31, 95, 191), font=small, anchor="lm")
     meta = layout["meta"]
     d.text((margin, 14), f"MicroMacro-Castres — brouillon — grille tournée de {meta['angle']:+.1f}° — facteur {meta['factor']} case/m "
-           f"(1 case = {1 / meta['factor']:.1f} m) — {meta['streets']} voies réelles, {meta['bends']} coudes — "
+           f"(1 case = {1 / meta['factor']:.1f} m) — {meta['streets']} voies gardées, {meta['bends']} coudes — "
            f"vide {meta['open_share']} % de la grille, {meta['open_share_land']} % hors eau (information)",
            fill=(0, 0, 0), font=fond.load_font(22))
     lx = margin
@@ -987,9 +1107,19 @@ def main():
     ap.add_argument("--preview", default="out/layout_preview.png")
     ap.add_argument("--fond", default="data/fond_castres_grille.png", help="fond recadré sur la grille ('' pour ne pas le produire)")
     ap.add_argument("--rotate", default="auto", help="angle de la grille en degrés, ou 'auto' (place + rue Sabatier droites ; -5,5°)")
+    ap.add_argument("--protect", default="osm", choices=["osm", "decisions"],
+                    help="voies qui ne sautent jamais : 'osm' = toute voie qui a un nom dans OSM ; "
+                         "'decisions' = seulement les cinq rues nommées, les trois boulevards et les quais")
+    ap.add_argument("--dropped", default="out/voies_supprimees.txt", help="liste des voies supprimées avec la raison")
     a = ap.parse_args()
-    layout, g, log = build(a.osm, a.rotate)
+    layout, g, log = build(a.osm, a.rotate, a.protect)
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
+    dropped = layout.pop("dropped")
+    if a.dropped:
+        os.makedirs(os.path.dirname(a.dropped) or ".", exist_ok=True)
+        with open(a.dropped, "w", encoding="utf-8") as f:
+            f.write(f"Voies supprimées ({len(dropped)}) — protection : {a.protect}\n\n" + "\n".join(f"- {d}" for d in dropped) + "\n")
+        print(f"écrit {a.dropped} ({len(dropped)} voies)")
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(layout, f, ensure_ascii=False, indent=1)
     print(f"écrit {a.out}")
