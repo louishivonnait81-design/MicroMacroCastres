@@ -1,0 +1,8 @@
+out/
+inbox/*.png
+inbox/*.jpg
+*.blend
+*.blend1
+.venv/
+__pycache__/
+data/castres.osm
