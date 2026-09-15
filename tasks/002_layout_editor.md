@@ -19,13 +19,13 @@ Un fichier `tools/layout-editor/index.html` (sans serveur, sans dépendance rés
 `cells` : une lettre par case, `rows` lignes de `cols` caractères, séparées par `\n`.
 
 ## Partie A — `pipeline/00_osm_to_layout.py`
-1. Projeter les rues OSM (highway hors autoroutes) en mètres, choisir un facteur de compression mètres → cases tel que le périmètre de `DECISIONS.md` tienne dans la grille (afficher le facteur ; attendu 0,6–0,75). Le tracé et les positions relatives sont conservés ; seules les longueurs sont compressées.
+1. Projeter les rues OSM (highway hors autoroutes) en mètres, appliquer le facteur de compression de `DECISIONS.md` (0,097 case/m, calculé pour que le périmètre tienne dans la grille, marge à l'est ; afficher le facteur). Le tracé et les positions relatives sont conservés ; seules les longueurs sont compressées. Ne garder que les boulevards, les rues principales et les cinq rues nommées.
 2. Redresser chaque rue sur les axes 0°/90° de la grille (polyligne simplifiée, chaque segment accroché à l'axe le plus proche), largeur minimale 4 cases, boulevards 6.
 3. Tout ce qui est entouré de rues devient `I`. Le facteur de compression fixe uniquement les positions ; la part de vide se gagne ensuite sur les îlots, jamais en réduisant le périmètre :
    a. élargir les rues à 4 cases (6 pour les boulevards) en érodant les îlots ;
    b. couper tout îlot de plus de 12 cases de côté par une rue intérieure de 3 cases ;
    c. répéter a–b jusqu'à ce que rues + places + parcs représentent au moins 33 % de la grille.
-   Des périmètres réduits ne sont proposés que si le facteur descend sous 0,55 malgré cela.
+   Le périmètre et le facteur sont fixés par `DECISIONS.md` ; on ne les rediscute pas ici.
 4. Poser `p` (place Jean-Jaurès), `P` (jardin), `w` (Agout, largeur 8–12 cases), `q` (quais, 2 cases le long de l'eau) d'après les polygones OSM, redressés.
 5. Réserver les rectangles des monuments de `DECISIONS.md` (position d'après OSM `name`).
 6. Écrire `data/layout.json` + un PNG de contrôle en couleurs `out/layout_preview.png` (une couleur par type, monuments hachurés, grille A–G / 1–4 en marge, facteur de compression et pourcentage rues + places + parcs affichés dans la marge).

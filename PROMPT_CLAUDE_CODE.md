@@ -21,7 +21,7 @@ Commence par tasks/001_environnement.md. Confirme d'abord en trois lignes ce que
 ## Message 2 : après la fiche 001 validée
 
 ```
-Fiche 001 validée. Passe à tasks/002. Le fichier data/castres.osm est dans le repo ; génère le fond avec pipeline/00b_osm_to_fond.py. Le facteur de compression (mètres → cases) doit faire tenir le périmètre de DECISIONS.md dans 106 × 71 cases avec des rues de 3 cases minimum ; affiche le facteur obtenu. S'il descend sous 0,55, propose-moi deux périmètres légèrement réduits avec leur PNG de contrôle et arrête-toi.
+Fiche 001 validée. Passe à tasks/002. Le fichier data/castres.osm est dans le repo ; génère le fond avec pipeline/00b_osm_to_fond.py. Le facteur de compression est celui de DECISIONS.md (0,097 case/m) ; affiche-le. Produis le brouillon, son PNG de contrôle et arrête-toi pour que je le corrige dans l'éditeur.
 ```
 
 ## Message 3 : à chaque nouvelle fiche

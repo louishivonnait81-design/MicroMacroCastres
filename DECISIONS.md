@@ -27,7 +27,12 @@ Un jeu de type MicroMacro : une grande carte isométrique noir et blanc du vieux
 
 ## Compression — ce qui se compresse
 
-Le périmètre est **étendu** et ne tient pas à l'échelle réelle. Règle : on garde le tracé réel (position relative des rues, des îlots, des monuments, de la rivière) et on compresse les **longueurs** — emprises des bâtiments et longueur des rues — d'un facteur unique calculé en fiche 002 (attendu : 0,6–0,75). Un immeuble de 15 m de façade fait donc 8–10 cases, pas 15. Les rues ne descendent jamais sous 3 cases, quel que soit le facteur.
+Le périmètre est **étendu** et ne tient pas à l'échelle réelle. Règle : on garde le tracé réel (position relative des rues, des îlots, des monuments, de la rivière) et on compresse les **longueurs** d'un facteur unique. Facteur retenu (fiche 002) : **0,097 case par mètre, soit 1 case ≈ 10 m**. Le périmètre de 927 × 735 m tient ainsi dans 106 × 71 cases ; la marge de 16 cases en largeur va à l'est, sur Villegoudou.
+
+- Un îlot réel devient un à deux immeubles de 4–8 cases.
+- Seuls les boulevards, les rues principales et les cinq rues nommées sont conservés ; les venelles et impasses sont omises.
+- Les rues conservées font 4 cases (6 pour les boulevards). Les rues ne descendent jamais sous 3 cases.
+- Le personnage reste 1 case : c'est l'échelle réelle de MicroMacro, où les personnages sont dix fois trop grands par rapport aux bâtiments.
 
 - Hauteurs : **3 niveaux partout**, monuments compris sauf clocher et théâtre. Pas d'exception.
 - Gros bâtiments (cathédrale, Évêché, théâtre) : emprise réduite à 2–3 immeubles ordinaires, silhouette conservée.
