@@ -857,6 +857,31 @@ def build(osm_path, rotate=None, core=None, verbose=True):
         if not F:
             say(f"ATTENTION : {mid_} ← « {label} » : emprise réelle vide dans la grille")
             return None
+        real = len(F)
+        if ch == "I":
+            # un monument bâti est une boîte pleine : le rectangle englobant de
+            # l'emprise réelle, élargi côté îlots jusqu'à atteindre +grow en surface
+            x0, y0, w, h = bbox_of(list(F))
+            x1, y1 = x0 + w - 1, y0 + h - 1
+
+            def box_cells(ax, ay, bx, by):
+                return {(x, y) for y in range(ay, by + 1) for x in range(ax, bx + 1)
+                        if inside(x, y) and grid[y][x] not in "wqp" and not protected[y][x]}
+            target = int(round(real * (1 + grow)))
+            for _ in range(20):
+                if len(box_cells(x0, y0, x1, y1)) >= target:
+                    break
+                sides = {
+                    "w": (x0 - 1, y0, x0 - 1, y1), "e": (x1 + 1, y0, x1 + 1, y1),
+                    "n": (x0, y0 - 1, x1, y0 - 1), "s": (x0, y1 + 1, x1, y1 + 1)}
+                best = max(sides.items(), key=lambda kv: len([c for c in box_cells(*kv[1]) if grid[c[1]][c[0]] in ".I"]))
+                if not box_cells(*best[1]):
+                    break
+                k = best[0]
+                x0, y0, x1, y1 = (x0 - 1 if k == "w" else x0, y0 - 1 if k == "n" else y0, x1 + 1 if k == "e" else x1, y1 + 1 if k == "s" else y1)
+                x0, y0, x1, y1 = max(0, x0), max(0, y0), min(COLS - 1, x1), min(ROWS - 1, y1)
+            F = box_cells(x0, y0, x1, y1)
+            grow = 0.0          # la boîte contient déjà l'agrandissement
         # voies sous l'emprise réelle
         gone, pushed = set(), 0
         for c in F:
@@ -898,8 +923,9 @@ def build(osm_path, rotate=None, core=None, verbose=True):
         cells = F | added
         x0, y0, w, h = bbox_of(list(cells))
         monuments.append(dict(id=mid_, x=x0, y=y0, w=w, h=h, levels=levels, cells=len(cells)))
-        report.append((mid_, len(F), int(round(len(F) * (1 + grow))), len(cells), f"{w} × {h}", len(gone), pushed))
-        say(f"monument {mid_} ← « {label} » : emprise réelle {len(F)} cases, prévue {int(round(len(F) * (1 + grow)))}, "
+        planned = int(round(real * (1 + MONUMENT_GROW))) if ch == "I" else int(round(real * (1 + grow)))
+        report.append((mid_, real, planned, len(cells), f"{w} × {h}", len(gone), pushed))
+        say(f"monument {mid_} ← « {label} » : emprise réelle {real} cases, prévue {planned}, "
             f"obtenue {len(cells)} (rectangle {w} × {h} en {x0},{y0}) ; {len(gone)} venelle(s)/ruelle(s) supprimée(s), "
             f"{pushed} case(s) de voie repoussée(s)")
         return cells
