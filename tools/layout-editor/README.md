@@ -5,7 +5,7 @@
 
 ## Usage
 
-1. **Ouvrir layout.json** (ou glisser le fichier sur la grille). « Nouveau 106 × 71 » crée une grille vide.
+1. **Ouvrir layout.json** (ou glisser le fichier sur la grille). « Nouveau 71 × 106 » crée une grille vide (portrait).
 2. **Image de fond** : glisser `data/fond_castres.png` (ou le choisir). Régler l'opacité,
    le décalage X / Y et la largeur en cases pour l'aligner sur la grille ; la transparence
    des cases se règle à part. Ces réglages sont mémorisés dans le JSON exporté (`background`).

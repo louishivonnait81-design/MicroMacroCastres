@@ -10,7 +10,7 @@ Un fichier `tools/layout-editor/index.html` (sans serveur, sans dépendance rés
 
 ## Format `layout.json`
 ```json
-{ "cols": 106, "rows": 71, "cell_cm": 1.0,
+{ "cols": 71, "rows": 106, "cell_cm": 1.0,
   "cells": "…",  
   "legend": {"r":"rue","b":"boulevard","I":"ilot","p":"place","P":"parc","w":"eau","q":"quai",".":"vide"},
   "monuments": [{"id":"saint-benoit","x":40,"y":12,"w":10,"h":16,"levels":6}],

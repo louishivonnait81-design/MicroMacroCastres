@@ -166,9 +166,9 @@ def main():
         print("nouvelle grille et zoom")
         page.once("dialog", lambda d: d.accept())
         page.click("#bNew")
-        check(page.evaluate("window.editor.grid") == "." * (cols * rows), "nouvelle grille vide 106 × 71")
+        check(page.evaluate("window.editor.grid") == "." * (cols * rows), "nouvelle grille vide 71 × 106")
         page.keyboard.press("+")
-        check(page.evaluate("window.editor.layout.cols") == 106, "zoom sans erreur")
+        check(page.evaluate("window.editor.layout.cols") == 71, "zoom sans erreur")
 
         check(not errors, "aucune erreur JavaScript : " + "; ".join(errors[:3]))
         browser.close()

@@ -1,6 +1,6 @@
 # DECISIONS — MicroMacro-Castres
 
-Une page. Ce qui est écrit ici ne se rediscute pas dans les fiches `tasks/`. Arrêté le 15/09/2026.
+Une page. Ce qui est écrit ici ne se rediscute pas dans les fiches `tasks/`. Arrêté le 15/09/2026, périmètre et format révisés le 17/09/2026.
 
 ## Objet
 
@@ -8,8 +8,8 @@ Un jeu de type MicroMacro : une grande carte isométrique noir et blanc du vieux
 
 ## Format
 
-- Papier : 110 × 75 cm, paysage. Marge de 2 cm avec quadrillage A–G / 1–4 comme sur MicroMacro.
-- Grille de travail : 1 case = 1 cm papier. Zone dessinée : 106 × 71 cases.
+- Papier : 75 × 110 cm, **portrait**, comme la carte MicroMacro posée sur la table. Marge de 2 cm avec quadrillage 1–4 (petit côté) / A–G (grand côté).
+- Grille de travail : 1 case = 1 cm papier. Zone dessinée : **71 × 106 cases** (71 colonnes, 106 lignes).
 - Projection : isométrique vraie (angles à 30° sur le papier), orthographique. Orientation `ISO_TURN = 45°` par défaut ; fixée après la fiche 006.
 - Trait : noir, une seule épaisseur (1,2–1,5 px à 4000 px de large ; ~0,25 mm au tirage), aucune hachure, aucun aplat, aucune ombre.
 - Fichiers finaux : SVG (calques : squelette, monuments, détails, personnages, cadre) + PNG 300 dpi.
@@ -23,28 +23,26 @@ Un jeu de type MicroMacro : une grande carte isométrique noir et blanc du vieux
 | Arbre (boule) | 1,5–2 de diamètre |
 | Niveau d'immeuble | 1 de haut |
 | Voie | venelle 1, ruelle 2, rue 3, rue nommée 4, boulevard / quai 6–8 |
-| Place Jean-Jaurès | 18–24 |
+| Place Jean-Jaurès | emprise réelle, 19 × 8 à 0,17 |
 
 ## Compression — ce qui se compresse
 
-Le périmètre est **étendu** et ne tient pas à l'échelle réelle. Règle : on garde le tracé réel (position relative des rues, des îlots, des monuments, de la rivière) et on compresse les **longueurs** d'un facteur unique. Facteur retenu (fiche 002) : **0,097 case par mètre, soit 1 case ≈ 10 m**. Le périmètre de 927 × 735 m tient ainsi dans 106 × 71 cases ; la marge de 16 cases en largeur va à l'est, sur Villegoudou.
+Le périmètre est le **cœur** de la ville (ci-dessous), pas le périmètre étendu. Règle : on garde le tracé réel (voies, îlots, monuments, rivière) et on compresse les longueurs d'un facteur unique. Facteur retenu (17/09) : **0,170 case par mètre, soit 1 case ≈ 5,9 m**. La grille couvre 418 × 624 m.
 
-- Le réseau piéton et routier réel est gardé en entier, avec ses connexions : rues, ruelles, venelles, passages, escaliers, allées. Aucune voie supprimée. Un Castrais doit pouvoir suivre n'importe quel trajet de la vraie ville sur la carte.
-- Largeur selon le caractère : venelle 1 case, ruelle 2, rue 3, rues nommées 4, boulevards et quais 6–8 avec arbres. Pas d'escalier de cases : au plus un coude à angle droit toutes les 8 cases.
-- Les bâtiments n'ont aucune fidélité à respecter, sauf les monuments à leur position. Tout ce qui n'est pas voie, place, parc ou eau est îlot, plein, un à deux immeubles par îlot.
-- La part de vide n'est qu'une information, pas un objectif.
-- Le personnage reste 1 case : c'est l'échelle réelle de MicroMacro, où les personnages sont dix fois trop grands par rapport aux bâtiments.
-
-- Hauteurs : **3 niveaux partout**, monuments compris sauf clocher et théâtre. Pas d'exception.
-- Gros bâtiments (cathédrale, Évêché, théâtre) : emprise réduite à 2–3 immeubles ordinaires, silhouette conservée.
-
-Hiérarchie de détail : bâtiments pauvres (boîtes + fenêtres), rues et arbres minimaux, monuments moyens, tout le détail dans les personnages et les petits objets.
+- Toutes les voies nommées dans OSM sont gardées, avec leurs connexions ; sont écartées d'office les trottoirs, passages piétons, voies de service sans nom, `path`, `cycleway`, escaliers sans nom et doublons de trottoir. Un Castrais doit pouvoir suivre n'importe quel trajet de la vraie ville sur la carte.
+- Largeur selon le caractère : venelle 1 case, rue ordinaire 2, avenue et voie primaire 3, les cinq rues nommées 4, boulevards Léon Bourgeois / Miredames / Henri Sizaire et quais 5 (plantés). Pas d'escalier de cases : au plus un coude à angle droit toutes les 8 cases.
+- Tout ce qui n'est pas voie, place, parc ou eau est îlot, plein. Un îlot de moins de 4 cases de côté est une maison unique à 2 niveaux.
+- Les monuments sont à leur position réelle, à leur emprise réelle OSM compressée agrandie de 30 % dans les îlots voisins uniquement, jamais sur une voie. Une voie ne traverse pas un monument : les venelles et ruelles sous l'emprise réelle disparaissent, les autres voies sont repoussées au bord.
+- Le personnage reste 1 case : c'est l'échelle réelle de MicroMacro.
+- La part de vide n'est qu'une information.
 
 ## Périmètre
 
-Rive gauche : du bd Léon Bourgeois à l'Agout, du bd Miredames au bd Henri Sizaire (place Jean-Jaurès, cathédrale, Évêché et jardin, théâtre). Rive droite : le quartier Villegoudou et le quai, jusqu'à la première rue parallèle à l'Agout. Deux ponts.
+Le cœur de Castres, en portrait : un rectangle de 418 × 624 m tourné de −5,5° (place Jean-Jaurès et rue Sabatier droites), centré sur les neuf éléments obligatoires puis décalé de 20 m vers l'ouest pour prendre la rue Chambre de l'Édit. Centre 43.60423 N, 2.24289 E ; coins NW 43.60719 N, 2.24068 E, NE 43.60683 N, 2.24584 E, SE 43.60126 N, 2.24510 E, SW 43.60162 N, 2.23994 E.
 
-Rues nommées (réseau, à confirmer sur place) : rue Sabatier, rue Frédéric Thomas / Victor Hugo, rue de l'Hôtel de Ville, rue Villegoudou, quai des Jacobins. Les autres rues existent sur la carte mais ne sont pas nommées.
+Éléments obligatoires, tous dans le cadre : place Jean-Jaurès, cathédrale Saint-Benoît, palais de l'Évêché et son jardin entier, théâtre, l'Agout avec les maisons sur l'eau, Pont Vieux (9 cases de marge) et Pont Neuf, rue Villegoudou, église Saint-Jacques de Villegoudou.
+
+Rues nommées (largeur 4) : rue Sabatier, rue Frédéric Thomas / Victor Hugo, rue de l'Hôtel de Ville, rue Villegoudou, quai des Jacobins. Les autres voies existent sur la carte à leur largeur de caractère mais ne sont pas nommées.
 
 Lieux à histoires (10) :
 1. le marché sur la place Jean-Jaurès
@@ -60,16 +58,17 @@ Lieux à histoires (10) :
 
 Tout ce qui n'est pas dans cette liste est simplifié ou omis.
 
-## Monuments (6, boîtes réservées dans la grille)
+## Monuments (emprise réelle OSM compressée, +30 % dans les îlots voisins)
 
-| id | Nom | Emprise (cases, après compression) | Hauteur |
-|---|---|---|---|
-| saint-benoit | cathédrale Saint-Benoît | ~10 × 14 | 3 niveaux + clocher 6 |
-| eveche | palais de l'Évêché (hôtel de ville / musée Goya) | ~12 × 7 | 3 |
-| jardin-eveche | jardin de l'Évêché | ~14 × 10 | — |
-| theatre | théâtre municipal | ~7 × 6 | 3 + fronton |
-| maisons-agout | maisons sur l'Agout (rangée) | ~20 × 4 | 3 |
-| ponts | Pont Vieux et Pont Neuf | 2 × (6 × 3) | — |
+| id | Nom | Emprise réelle (cases) | Emprise +30 % | Hauteur |
+|---|---|---|---|---|
+| saint-benoit | cathédrale Saint-Benoît | 46 | 60 | 3 + clocher 6 |
+| eveche | palais de l'Évêché (hôtel de ville / musée Goya) | 65 | 84 | 3 |
+| jardin-eveche | jardin de l'Évêché | 300 | 390 | — |
+| theatre | théâtre municipal | 31 | 40 | 3 + fronton |
+| saint-jacques | église Saint-Jacques de Villegoudou | 30 | 39 | 3 + clocher |
+| maisons-agout | maisons sur l'Agout (rive gauche entre les ponts) | 58 | 58 | 3 |
+| pont-vieux, pont-neuf | Pont Vieux et Pont Neuf | voies de 4 cases d'une rive à l'autre | — | — |
 
 ## Ce qu'on ne fait pas
 

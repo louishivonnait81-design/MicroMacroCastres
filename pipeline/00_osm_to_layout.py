@@ -4,8 +4,8 @@
 jeu à partir de data/castres.osm.
 
 Ce que fait le script, dans l'ordre (voir tasks/002_layout_editor.md) :
-  1. projette le périmètre de DECISIONS.md sur la grille 106 × 71 avec le
-     facteur de compression fixé (0,097 case/m ; marge de 16 cases à l'est)
+  1. pose la grille 71 × 106 (portrait) sur le cœur de DECISIONS.md : centre,
+     angle -5,5°, facteur 0,17 case/m (1 case ≈ 5,9 m)
   2. garde tout le réseau réel (rues, ruelles, venelles, passages, escaliers,
      allées) avec ses connexions ; largeur selon le caractère (venelle 1,
      ruelle 2, rue 3, rue nommée 4, boulevard / quai 6) ; redressement
@@ -44,14 +44,19 @@ _spec.loader.exec_module(fond)
 # ---------------------------------------------------------------------------
 # Paramètres — tout ce qui vient de DECISIONS.md
 # ---------------------------------------------------------------------------
-COLS, ROWS = 106, 71
+COLS, ROWS = 71, 106      # portrait, comme la carte MicroMacro posée sur la table (papier 75 × 110 cm)
 # Repère de référence : centre de l'ancien périmètre étendu (les décalages du
 # cœur sont exprimés en mètres tournés par rapport à ce point).
 REF = dict(south=43.6010, west=2.2335, north=43.6076, east=2.2450)
-# Cœur (décision du 17/09) : rectangle 106 × 71 cases posé sur le centre-ville,
-# défini par son centre (du, dv en mètres tournés depuis REF), l'angle de la
-# grille et le facteur (cases par mètre). Voir DECISIONS.md.
-CORE = dict(du=313.0, dv=74.0, angle=-5.5, factor=0.170)
+# Cœur (décision du 17/09) : rectangle 71 × 106 cases (418 × 624 m à 0,17)
+# posé sur le centre-ville, défini par son centre (du, dv en mètres tournés
+# depuis REF), l'angle de la grille et le facteur (cases par mètre). Centré sur
+# les neuf éléments obligatoires (u 114–513, v −233–273 → 313, 20), puis
+# décalé de 20 m vers l'ouest pour prendre la rue Chambre de l'Édit. Voir
+# DECISIONS.md.
+CORE = dict(du=293.0, dv=20.0, angle=-5.5, factor=0.170)
+# Repères imprimés en marge : lettres sur le grand côté, chiffres sur le petit
+BANDS_X, BANDS_Y = ("1234", "ABCDEFG") if COLS < ROWS else ("ABCDEFG", "1234")
 
 # Règles du 16/09 :
 #  1. tout le réseau réel est gardé (rues, ruelles, venelles, passages,
@@ -962,6 +967,12 @@ def build(osm_path, rotate=None, core=None, verbose=True):
         else:
             say("ATTENTION : aucun bâtiment OSM trouvé sur la rive gauche entre les ponts")
 
+    for m in monuments:
+        margin = min(m["x"], m["y"], COLS - m["x"] - m["w"], ROWS - m["y"] - m["h"])
+        if margin < 3:
+            say(f"ATTENTION : {m['id']} à {margin} case(s) du bord de la grille")
+    say("marges au bord (cases) : " + ", ".join(f"{m['id']} {min(m['x'], m['y'], COLS - m['x'] - m['w'], ROWS - m['y'] - m['h'])}" for m in monuments))
+
     # 5. règle 3 : tout le reste est îlot, rempli à 100 % ; aucune découpe
     for y in range(ROWS):
         for x in range(COLS):
@@ -1013,20 +1024,21 @@ def preview(layout, path, log, cell=20, margin=70):
         for x, c in enumerate(row):
             d.rectangle([ox + x * cell, oy + y * cell, ox + (x + 1) * cell - 1, oy + (y + 1) * cell - 1], fill=COLORS[c])
     for x in range(COLS + 1):
-        d.line([ox + x * cell, oy, ox + x * cell, oy + ROWS * cell], fill=(0, 0, 0, 40) if x % 15 else (0, 0, 0), width=1)
+        d.line([ox + x * cell, oy, ox + x * cell, oy + ROWS * cell], fill=(0, 0, 0, 40), width=1)
     for y in range(ROWS + 1):
         d.line([ox, oy + y * cell, ox + COLS * cell, oy + y * cell], fill=(0, 0, 0, 40), width=1)
-    for i in range(8):
-        x = ox + round(i * COLS / 7) * cell
+    nx, ny = len(BANDS_X), len(BANDS_Y)
+    for i in range(nx + 1):
+        x = ox + round(i * COLS / nx) * cell
         d.line([x, oy, x, oy + ROWS * cell], fill=(0, 0, 0), width=3)
-    for j in range(5):
-        y = oy + round(j * ROWS / 4) * cell
+    for j in range(ny + 1):
+        y = oy + round(j * ROWS / ny) * cell
         d.line([ox, y, ox + COLS * cell, y], fill=(0, 0, 0), width=3)
     big = fond.load_font(30); small = fond.load_font(16)
-    for i, L in enumerate("ABCDEFG"):
-        d.text((ox + (i + .5) * COLS / 7 * cell, oy - 24), L, fill=(0, 0, 0), font=big, anchor="mm")
-    for j, L in enumerate("1234"):
-        d.text((ox - 30, oy + (j + .5) * ROWS / 4 * cell), L, fill=(0, 0, 0), font=big, anchor="mm")
+    for i, L in enumerate(BANDS_X):
+        d.text((ox + (i + .5) * COLS / nx * cell, oy - 24), L, fill=(0, 0, 0), font=big, anchor="mm")
+    for j, L in enumerate(BANDS_Y):
+        d.text((ox - 30, oy + (j + .5) * ROWS / ny * cell), L, fill=(0, 0, 0), font=big, anchor="mm")
     for m in layout["monuments"]:
         x0, y0 = ox + m["x"] * cell, oy + m["y"] * cell
         x1, y1 = x0 + m["w"] * cell, y0 + m["h"] * cell
@@ -1048,7 +1060,7 @@ def preview(layout, path, log, cell=20, margin=70):
         d.rectangle([x - 3, y - 10, x + tw + 3, y + 10], fill=(255, 255, 255))
         d.text((x, y), l["text"], fill=(31, 95, 191), font=small, anchor="lm")
     meta = layout["meta"]
-    d.text((margin, 14), f"MicroMacro-Castres — brouillon du cœur — grille tournée de {meta['angle']:+.1f}° — facteur {meta['factor']} case/m "
+    d.text((margin, 14), f"MicroMacro-Castres — cœur, {COLS} × {ROWS} — {meta['angle']:+.1f}° — {meta['factor']} case/m "
            f"(1 case = {1 / meta['factor']:.1f} m) — {meta['streets']} voies gardées, {meta['bends']} coudes — "
            f"vide {meta['open_share']} % de la grille, {meta['open_share_land']} % hors eau (information)",
            fill=(0, 0, 0), font=fond.load_font(22))

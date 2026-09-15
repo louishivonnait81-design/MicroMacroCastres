@@ -2,7 +2,7 @@
 """
 00d_layout_print.py — Fiche 003 : impression de contrôle du plan de jeu.
 
-Produit out/layout_A3.png (A3 paysage, 420 × 297 mm à 300 dpi) et
+Produit out/layout_A3.png (A3 portrait ou paysage selon la grille, 300 dpi) et
 out/layout_A3.pdf à partir de data/layout.json : une couleur par type de
 case, monuments hachurés avec leur id, marges A–G / 1–4 comme sur le papier,
 légende et échelle. La grille entière tient sur la feuille (1 case ≈ 3,7 mm),
@@ -48,7 +48,9 @@ def main():
     colors = dict(COLORS)
     for i, k in enumerate(k for k in legend if k not in colors):
         colors[k] = EXTRA[i % len(EXTRA)]
-    W, H = mm(A3_MM[0]), mm(A3_MM[1])
+    portrait = cols < rows
+    W, H = (mm(A3_MM[1]), mm(A3_MM[0])) if portrait else (mm(A3_MM[0]), mm(A3_MM[1]))
+    bx, by = ("1234", "ABCDEFG") if portrait else ("ABCDEFG", "1234")
     margin, header = mm(18), mm(14)
     cell = min((W - 2 * margin) // cols, (H - 2 * margin - header) // rows)
     ox = (W - cols * cell) // 2
@@ -64,17 +66,17 @@ def main():
         d.line([ox + x * cell, oy, ox + x * cell, oy + rows * cell], fill=(120, 120, 120), width=1)
     for y in range(rows + 1):
         d.line([ox, oy + y * cell, ox + cols * cell, oy + y * cell], fill=(120, 120, 120), width=1)
-    for i in range(8):
-        x = ox + round(i * cols / 7) * cell
+    for i in range(len(bx) + 1):
+        x = ox + round(i * cols / len(bx)) * cell
         d.line([x, oy - mm(2), x, oy + rows * cell + mm(2)], fill=(0, 0, 0), width=mm(0.4))
-    for j in range(5):
-        y = oy + round(j * rows / 4) * cell
+    for j in range(len(by) + 1):
+        y = oy + round(j * rows / len(by)) * cell
         d.line([ox - mm(2), y, ox + cols * cell + mm(2), y], fill=(0, 0, 0), width=mm(0.4))
     big = fond.load_font(mm(6)); small = fond.load_font(mm(2.6)); tiny = fond.load_font(mm(2.0))
-    for i, L in enumerate("ABCDEFG"):
-        d.text((ox + (i + .5) * cols / 7 * cell, oy - mm(6)), L, fill=(0, 0, 0), font=big, anchor="mm")
-    for j, L in enumerate("1234"):
-        d.text((ox - mm(8), oy + (j + .5) * rows / 4 * cell), L, fill=(0, 0, 0), font=big, anchor="mm")
+    for i, L in enumerate(bx):
+        d.text((ox + (i + .5) * cols / len(bx) * cell, oy - mm(6)), L, fill=(0, 0, 0), font=big, anchor="mm")
+    for j, L in enumerate(by):
+        d.text((ox - mm(8), oy + (j + .5) * rows / len(by) * cell), L, fill=(0, 0, 0), font=big, anchor="mm")
     for m in lay.get("monuments", []):
         x0, y0 = ox + m["x"] * cell, oy + m["y"] * cell
         x1, y1 = x0 + m["w"] * cell, y0 + m["h"] * cell
@@ -97,12 +99,12 @@ def main():
     meta = lay.get("meta", {})
     d.text((ox, mm(4)), f"MicroMacro-Castres — plan de jeu — grille {cols} × {rows} cases, 1 case = 1 cm sur la carte finale "
            f"(ici {cell / DPI * 25.4:.1f} mm) — vide {meta.get('open_share_land', '?')} % hors eau — "
-           f"imprimer à 100 % sur A3 paysage", fill=(0, 0, 0), font=small)
+           f"imprimer à 100 % sur A3 {'portrait' if portrait else 'paysage'}", fill=(0, 0, 0), font=small)
     lx = ox
     for k, name in legend.items():
         d.rectangle([lx, mm(8.5), lx + mm(3), mm(11.5)], fill=colors[k], outline=(0, 0, 0))
         d.text((lx + mm(3.6), mm(10)), f"{k} {name}", fill=(0, 0, 0), font=tiny, anchor="lm")
-        lx += mm(22)
+        lx += mm(20)
     d.text((lx + mm(4), mm(10)), "monuments hachurés", fill=(0, 0, 0), font=tiny, anchor="lm")
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     img.save(out, dpi=(DPI, DPI))

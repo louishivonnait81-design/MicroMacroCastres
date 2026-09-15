@@ -71,7 +71,7 @@
   <section>
     <h2>Fichier</h2>
     <label class="btn">Ouvrir layout.json <input type="file" id="fLayout" accept=".json,application/json"></label>
-    <button id="bNew">Nouveau 106 × 71</button>
+    <button id="bNew">Nouveau 71 × 106</button>
     <button id="bExport">Exporter layout.json</button>
     <div class="row"><label>Fichier</label><span id="fname" class="help">aucun (glisser un .json sur la grille)</span></div>
     <div id="msg"></div>
@@ -143,7 +143,7 @@
     <p>Molette ou deux doigts : déplacer. <kbd>⌘</kbd>+molette ou pincer : zoom. <kbd>+</kbd>/<kbd>−</kbd> : zoom, <kbd>0</kbd> : ajuster.</p>
     <p>Crayon : clic ou glisser. <kbd>Maj</kbd>+clic : ligne droite depuis le dernier point peint.</p>
     <p>Type : appuyer sur sa lettre (<kbd>r</kbd> <kbd>b</kbd> <kbd>I</kbd> <kbd>m</kbd> <kbd>p</kbd> <kbd>P</kbd> <kbd>w</kbd> <kbd>q</kbd> <kbd>.</kbd>).</p>
-    <p>Marges A–G / 1–4 comme sur le papier. Les monuments sont hachurés, les rues étroites en rouge.</p>
+    <p>Marges A–G / 1–4 comme sur le papier (lettres sur le grand côté). Les monuments sont hachurés, les rues étroites en rouge.</p>
   </section>
 </aside>
 
@@ -164,7 +164,7 @@ const EXTRA_COLORS = ['#e6a0c4', '#a0c4e6', '#c4e6a0', '#e6c4a0', '#a0e6c4', '#c
 const OPEN_TYPES = ['r', 'b', 'p', 'P'];
 const MIN_STREET = 3;
 const MARGIN = 26;              // px : marge pour les repères A–G / 1–4
-const BANDS_X = 'ABCDEFG', BANDS_Y = '1234';
+let BANDS_X = 'ABCDEFG', BANDS_Y = '1234';   // lettres sur le grand côté, chiffres sur le petit
 
 let lay = null;                 // objet layout (cols, rows, legend, monuments, labels, background)
 let grid = null;                // Array de caractères, rows*cols
@@ -189,7 +189,7 @@ const offCtx = off.getContext('2d');
 let dpr = 1, needRender = false;
 
 // ---------------------------------------------------------------- layout
-function newLayout(cols = 106, rows = 71) {
+function newLayout(cols = 71, rows = 106) {
   return {
     cols, rows, cell_cm: 1.0,
     cells: Array(rows).fill('.'.repeat(cols)).join('\n'),
@@ -218,6 +218,7 @@ function setLayout(obj, name) {
   $('fname').textContent = fileName;
   undoStack = []; redoStack = []; selMon = -1; pendingMon = null; lastPaint = null;
   off.width = lay.cols; off.height = lay.rows;
+  if (lay.cols < lay.rows) { BANDS_X = '1234'; BANDS_Y = 'ABCDEFG'; } else { BANDS_X = 'ABCDEFG'; BANDS_Y = '1234'; }
   if (!(type in legend)) type = Object.keys(legend)[0];
   buildTypes(); rebuildCells(); updateStats(); renderLists(); fit(); msg('');
   return true;
@@ -609,7 +610,7 @@ canvas.addEventListener('pointermove', e => {
   const { sx, sy } = evPos(e);
   const c = toCell(sx, sy);
   $('hud').textContent = inGrid(c.x, c.y)
-    ? `x ${c.x}  y ${c.y}  ${BANDS_X[Math.min(6, Math.floor(c.x * 7 / lay.cols))]}${BANDS_Y[Math.min(3, Math.floor(c.y * 4 / lay.rows))]}  [${grid[c.y * lay.cols + c.x]}]  zoom ${view.scale.toFixed(1)}`
+    ? `x ${c.x}  y ${c.y}  ${BANDS_X[Math.min(BANDS_X.length - 1, Math.floor(c.x * BANDS_X.length / lay.cols))]}${BANDS_Y[Math.min(BANDS_Y.length - 1, Math.floor(c.y * BANDS_Y.length / lay.rows))]}  [${grid[c.y * lay.cols + c.x]}]  zoom ${view.scale.toFixed(1)}`
     : `zoom ${view.scale.toFixed(1)}`;
   if (!drag) return;
   if (drag.kind === 'pan') { view.ox = drag.ox + sx - drag.sx; view.oy = drag.oy + sy - drag.sy; requestRender(); }
