@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Éditeur de grille — MicroMacro-Castres</title>
+<style>
+  :root {
+    --bg: #f4f2ee; --panel: #ffffff; --ink: #222; --muted: #777; --line: #ddd;
+    --accent: #1f5fbf; --warn: #c1272d; --ok: #2e7d32;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink); background: var(--bg); overflow: hidden;
+  }
+  #panel {
+    width: 300px; flex: none; height: 100%; overflow-y: auto; background: var(--panel);
+    border-right: 1px solid var(--line); padding: 10px 12px 30px;
+  }
+  #panel h1 { font-size: 15px; margin: 4px 0 10px; }
+  #panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 14px 0 6px; }
+  #panel section { border-top: 1px solid var(--line); padding-top: 2px; }
+  #panel section:first-of-type { border-top: 0; }
+  button, label.btn {
+    font: inherit; padding: 4px 8px; margin: 2px 2px 2px 0; border: 1px solid #bbb; border-radius: 4px;
+    background: #fafafa; cursor: pointer; color: var(--ink);
+  }
+  button:hover, label.btn:hover { background: #eee; }
+  button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button:disabled { opacity: .4; cursor: default; }
+  input[type=file] { display: none; }
+  input[type=number], input[type=text] { font: inherit; padding: 3px 5px; border: 1px solid #bbb; border-radius: 4px; width: 100%; }
+  input[type=range] { width: 100%; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 4px 0; }
+  .row label { flex: none; color: var(--muted); min-width: 60px; }
+  .types button { display: flex; align-items: center; width: 100%; text-align: left; margin: 2px 0; padding: 3px 6px; }
+  .types .sw { width: 16px; height: 16px; border: 1px solid #999; margin-right: 8px; flex: none; }
+  .types .k { font-family: Menlo, monospace; width: 16px; }
+  .types .n { flex: 1; }
+  .types .c { color: inherit; opacity: .75; font-variant-numeric: tabular-nums; }
+  .types button.active .c { opacity: 1; }
+  .big { font-size: 26px; font-weight: 600; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); }
+  #msg { color: var(--warn); min-height: 1em; white-space: pre-wrap; }
+  ul.list { list-style: none; padding: 0; margin: 4px 0; }
+  ul.list li { display: flex; gap: 6px; align-items: center; padding: 2px 0; border-bottom: 1px dotted var(--line); }
+  ul.list li span { flex: 1; font-family: Menlo, monospace; font-size: 12px; }
+  ul.list li button { padding: 1px 6px; margin: 0; }
+  #monform { background: #f2f6fc; border: 1px solid #c8d6ea; border-radius: 4px; padding: 6px; margin: 6px 0; }
+  #wrap { flex: 1; position: relative; min-width: 0; }
+  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+  #c.pan { cursor: grab; }
+  #hud {
+    position: absolute; right: 10px; bottom: 8px; background: rgba(255,255,255,.85); padding: 3px 8px;
+    border-radius: 4px; font-family: Menlo, monospace; font-size: 12px; pointer-events: none;
+  }
+  #drop { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(31,95,191,.15); border: 3px dashed var(--accent); font-size: 20px; color: var(--accent); pointer-events: none; }
+  #drop.on { display: flex; }
+  kbd { font-family: Menlo, monospace; font-size: 11px; background: #eee; border: 1px solid #ccc; border-radius: 3px; padding: 0 4px; }
+  .help { color: var(--muted); font-size: 12px; }
+  .help p { margin: 3px 0; }
+</style>
+</head>
+<body>
+<aside id="panel">
+  <h1>Grille MicroMacro-Castres</h1>
+
+  <section>
+    <h2>Fichier</h2>
+    <label class="btn">Ouvrir layout.json <input type="file" id="fLayout" accept=".json,application/json"></label>
+    <button id="bNew">Nouveau 106 × 71</button>
+    <button id="bExport">Exporter layout.json</button>
+    <div class="row"><label>Fichier</label><span id="fname" class="help">aucun (glisser un .json sur la grille)</span></div>
+    <div id="msg"></div>
+  </section>
+
+  <section>
+    <h2>Fond</h2>
+    <label class="btn">Image de fond <input type="file" id="fBg" accept="image/*"></label>
+    <button id="bBgOff" disabled>Retirer</button>
+    <div class="row"><label>Opacité</label><input type="range" id="bgOp" min="0" max="1" step="0.05" value="0.5"></div>
+    <div class="row"><label>X (cases)</label><input type="number" id="bgX" step="0.5" value="0"></div>
+    <div class="row"><label>Y (cases)</label><input type="number" id="bgY" step="0.5" value="0"></div>
+    <div class="row"><label>Largeur</label><input type="number" id="bgW" step="0.5" value="106"></div>
+    <div class="row"><label>Cases</label><input type="range" id="cellOp" min="0.1" max="1" step="0.05" value="0.65"></div>
+  </section>
+
+  <section>
+    <h2>Outils</h2>
+    <div id="tools">
+      <button data-tool="pencil" title="Pinceau (B). Maj+clic : ligne droite depuis le dernier point">Pinceau <kbd>B</kbd></button>
+      <button data-tool="rect" title="Rectangle (E)">Rectangle <kbd>E</kbd></button>
+      <button data-tool="bucket" title="Seau (G)">Seau <kbd>G</kbd></button>
+      <button data-tool="monument" title="Monument (M) : tracer un rectangle, ou cliquer un monument existant">Monument <kbd>M</kbd></button>
+      <button data-tool="label" title="Label (T) : cliquer pour poser un texte">Label <kbd>T</kbd></button>
+      <button data-tool="pan" title="Main (H, ou espace enfoncé)">Main <kbd>H</kbd></button>
+    </div>
+    <div class="row">
+      <button id="bUndo" title="Annuler (⌘Z)">↶ Annuler</button>
+      <button id="bRedo" title="Rétablir (⇧⌘Z)">↷ Rétablir</button>
+      <button id="bFit" title="Ajuster à la fenêtre (0)">Ajuster</button>
+      <label><input type="checkbox" id="cbGrid" checked> grille</label>
+    </div>
+  </section>
+
+  <section>
+    <h2>Type de case (touche = lettre)</h2>
+    <div class="types" id="types"></div>
+  </section>
+
+  <section>
+    <h2>Statistiques</h2>
+    <div class="row"><span>Rues + places + parcs</span></div>
+    <div><span class="big" id="share">–</span> <span class="help">objectif ≥ 33 %</span></div>
+    <div class="row"><span id="narrow">–</span></div>
+    <div class="row"><label><input type="checkbox" id="cbNarrow" checked> surligner les rues &lt; 3 cases</label></div>
+  </section>
+
+  <section>
+    <h2>Monuments</h2>
+    <div id="monform" hidden>
+      <div class="row"><label>id</label><input type="text" id="mId" placeholder="saint-benoit"></div>
+      <div class="row"><label>niveaux</label><input type="number" id="mLevels" min="0" value="3"></div>
+      <div class="row"><label>x, y</label><input type="number" id="mX" min="0"><input type="number" id="mY" min="0"></div>
+      <div class="row"><label>w × h</label><input type="number" id="mW" min="1"><input type="number" id="mH" min="1"></div>
+      <div class="row">
+        <button id="mOk">OK</button><button id="mCancel">Annuler</button><button id="mDel" class="warn">Supprimer</button>
+      </div>
+    </div>
+    <ul class="list" id="monList"></ul>
+  </section>
+
+  <section>
+    <h2>Labels</h2>
+    <ul class="list" id="labList"></ul>
+  </section>
+
+  <section class="help">
+    <h2>Aide</h2>
+    <p>Molette ou deux doigts : déplacer. <kbd>⌘</kbd>+molette ou pincer : zoom. <kbd>+</kbd>/<kbd>−</kbd> : zoom, <kbd>0</kbd> : ajuster.</p>
+    <p>Pinceau : clic ou glisser. <kbd>Maj</kbd>+clic : ligne droite depuis le dernier point peint.</p>
+    <p>Type : appuyer sur sa lettre (<kbd>r</kbd> <kbd>I</kbd> <kbd>p</kbd> <kbd>P</kbd> <kbd>w</kbd> <kbd>q</kbd> <kbd>.</kbd>).</p>
+    <p>Marges A–G / 1–4 comme sur le papier. Les monuments sont hachurés, les rues étroites en rouge.</p>
+  </section>
+</aside>
+
+<main id="wrap">
+  <canvas id="c"></canvas>
+  <div id="hud">–</div>
+  <div id="drop">Déposer un layout.json ou une image de fond</div>
+</main>
+
+<script>
+(() => {
+'use strict';
+
+// ---------------------------------------------------------------- données
+const DEFAULT_LEGEND = { r: 'rue', I: 'ilot', p: 'place', P: 'parc', w: 'eau', q: 'quai', '.': 'vide' };
+const COLORS = { r: '#e3e3e3', I: '#c9a27e', p: '#f3d66b', P: '#9fd39b', w: '#8ec1e6', q: '#dccdb0', '.': '#ffffff' };
+const EXTRA_COLORS = ['#e6a0c4', '#a0c4e6', '#c4e6a0', '#e6c4a0', '#a0e6c4', '#c4a0e6'];
+const OPEN_TYPES = ['r', 'p', 'P'];
+const MIN_STREET = 3;
+const MARGIN = 26;              // px : marge pour les repères A–G / 1–4
+const BANDS_X = 'ABCDEFG', BANDS_Y = '1234';
+
+let lay = null;                 // objet layout (cols, rows, legend, monuments, labels, background)
+let grid = null;                // Array de caractères, rows*cols
+let legend = {}, colors = {};
+let fileName = 'layout.json';
+let bgImg = null, bg = { x: 0, y: 0, w: 106, opacity: 0.5, name: '' };
+let cellOpacity = 0.65;
+let tool = 'pencil', type = 'r';
+let view = { scale: 8, ox: MARGIN + 10, oy: MARGIN + 10 };
+let undoStack = [], redoStack = [];
+let narrowCells = [];           // indices des cases de rue étroites
+let selMon = -1;                // monument sélectionné (index) ou -1
+let pendingMon = null;          // rectangle en attente d'id
+let lastPaint = null;           // {x,y} dernier point peint (pour Maj+clic)
+let drag = null;                // opération en cours
+let spaceDown = false;
+
+const $ = id => document.getElementById(id);
+const canvas = $('c'), ctx = canvas.getContext('2d');
+const off = document.createElement('canvas');
+const offCtx = off.getContext('2d');
+let dpr = 1, needRender = false;
+
+// ---------------------------------------------------------------- layout
+function newLayout(cols = 106, rows = 71) {
+  return {
+    cols, rows, cell_cm: 1.0,
+    cells: Array(rows).fill('.'.repeat(cols)).join('\n'),
+    legend: { ...DEFAULT_LEGEND }, monuments: [], labels: [],
+  };
+}
+
+function setLayout(obj, name) {
+  const err = validate(obj);
+  if (err) { msg(err); return false; }
+  lay = obj;
+  lay.legend = { ...DEFAULT_LEGEND, ...(obj.legend || {}) };
+  lay.monuments = obj.monuments || [];
+  lay.labels = obj.labels || [];
+  legend = lay.legend;
+  colors = {};
+  let k = 0;
+  for (const c of Object.keys(legend)) colors[c] = COLORS[c] || EXTRA_COLORS[k++ % EXTRA_COLORS.length];
+  const lines = obj.cells.split('\n');
+  if (lines[lines.length - 1] === '') lines.pop();
+  grid = Array.from(lines.join(''));
+  if (obj.background) Object.assign(bg, obj.background);
+  else { bg.x = 0; bg.y = 0; bg.w = lay.cols; }
+  $('bgX').value = bg.x; $('bgY').value = bg.y; $('bgW').value = bg.w; $('bgOp').value = bg.opacity;
+  fileName = name || fileName;
+  $('fname').textContent = fileName;
+  undoStack = []; redoStack = []; selMon = -1; pendingMon = null; lastPaint = null;
+  off.width = lay.cols; off.height = lay.rows;
+  if (!(type in legend)) type = Object.keys(legend)[0];
+  buildTypes(); rebuildCells(); updateStats(); renderLists(); fit(); msg('');
+  return true;
+}
+
+function validate(o) {
+  if (!o || typeof o !== 'object') return 'JSON invalide';
+  if (!Number.isInteger(o.cols) || !Number.isInteger(o.rows) || o.cols < 1 || o.rows < 1) return 'cols / rows manquants ou invalides';
+  if (typeof o.cells !== 'string') return 'cells manquant';
+  const lines = o.cells.split('\n');
+  if (lines[lines.length - 1] === '') lines.pop();
+  if (lines.length !== o.rows) return `cells : ${lines.length} lignes au lieu de ${o.rows}`;
+  for (let i = 0; i < lines.length; i++) if (lines[i].length !== o.cols) return `cells ligne ${i} : ${lines[i].length} caractères au lieu de ${o.cols}`;
+  const leg = { ...DEFAULT_LEGEND, ...(o.legend || {}) };
+  const bad = new Set();
+  for (const ln of lines) for (const c of ln) if (!(c in leg)) bad.add(c);
+  if (bad.size) return 'caractères hors légende : ' + [...bad].join(' ');
+  for (const m of o.monuments || []) {
+    if (!m.id || ![m.x, m.y, m.w, m.h].every(Number.isInteger)) return 'monument incomplet : ' + JSON.stringify(m);
+    if (m.x < 0 || m.y < 0 || m.x + m.w > o.cols || m.y + m.h > o.rows) return `monument ${m.id} hors grille`;
+  }
+  return null;
+}
+
+function toJSON() {
+  const lines = [];
+  for (let y = 0; y < lay.rows; y++) lines.push(grid.slice(y * lay.cols, (y + 1) * lay.cols).join(''));
+  const out = {
+    cols: lay.cols, rows: lay.rows, cell_cm: lay.cell_cm || 1.0,
+    cells: lines.join('\n'), legend, monuments: lay.monuments, labels: lay.labels,
+  };
+  if (bgImg) out.background = { x: bg.x, y: bg.y, w: bg.w, opacity: bg.opacity, name: bg.name };
+  return JSON.stringify(out, null, 1);
+}
+
+function exportFile() {
+  if (!lay) return;
+  const blob = new Blob([toJSON()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName.endsWith('.json') ? fileName : 'layout.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function msg(t) { $('msg').textContent = t || ''; }
+
+// ---------------------------------------------------------------- cellules
+function rebuildCells() {
+  const img = offCtx.createImageData(lay.cols, lay.rows);
+  const d = img.data;
+  const rgb = {};
+  for (const c in colors) {
+    const h = colors[c];
+    rgb[c] = [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  }
+  for (let i = 0, p = 0; i < grid.length; i++, p += 4) {
+    const v = rgb[grid[i]] || [255, 0, 255];
+    d[p] = v[0]; d[p + 1] = v[1]; d[p + 2] = v[2]; d[p + 3] = 255;
+  }
+  offCtx.putImageData(img, 0, 0);
+  requestRender();
+}
+
+function pushUndo() {
+  undoStack.push({ g: grid.join(''), m: JSON.stringify(lay.monuments), l: JSON.stringify(lay.labels) });
+  if (undoStack.length > 200) undoStack.shift();
+  redoStack = [];
+  updateUndoButtons();
+}
+function snapshot() { return { g: grid.join(''), m: JSON.stringify(lay.monuments), l: JSON.stringify(lay.labels) }; }
+function restore(s) {
+  grid = Array.from(s.g); lay.monuments = JSON.parse(s.m); lay.labels = JSON.parse(s.l);
+  selMon = -1; pendingMon = null; $('monform').hidden = true;
+  rebuildCells(); updateStats(); renderLists();
+}
+function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); updateUndoButtons(); }
+function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); updateUndoButtons(); }
+function updateUndoButtons() { $('bUndo').disabled = !undoStack.length; $('bRedo').disabled = !redoStack.length; }
+
+function inGrid(x, y) { return x >= 0 && y >= 0 && x < lay.cols && y < lay.rows; }
+function setCell(x, y, c) { if (inGrid(x, y)) grid[y * lay.cols + x] = c; }
+
+function paintLine(x0, y0, x1, y1, c) {   // Bresenham
+  let dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  let dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  let e = dx + dy;
+  for (;;) {
+    setCell(x0, y0, c);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * e;
+    if (e2 >= dy) { e += dy; x0 += sx; }
+    if (e2 <= dx) { e += dx; y0 += sy; }
+  }
+}
+function paintRect(x0, y0, x1, y1, c) {
+  const xa = Math.max(0, Math.min(x0, x1)), xb = Math.min(lay.cols - 1, Math.max(x0, x1));
+  const ya = Math.max(0, Math.min(y0, y1)), yb = Math.min(lay.rows - 1, Math.max(y0, y1));
+  for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) grid[y * lay.cols + x] = c;
+}
+function bucket(x, y, c) {
+  if (!inGrid(x, y)) return;
+  const from = grid[y * lay.cols + x];
+  if (from === c) return;
+  const W = lay.cols, stack = [y * W + x];
+  while (stack.length) {
+    const i = stack.pop();
+    if (grid[i] !== from) continue;
+    grid[i] = c;
+    const cx = i % W;
+    if (cx > 0) stack.push(i - 1);
+    if (cx < W - 1) stack.push(i + 1);
+    if (i >= W) stack.push(i - W);
+    if (i + W < grid.length) stack.push(i + W);
+  }
+}
+
+// ---------------------------------------------------------------- stats
+function updateStats() {
+  const W = lay.cols, H = lay.rows, N = W * H;
+  const counts = {};
+  for (const c in legend) counts[c] = 0;
+  for (const c of grid) counts[c] = (counts[c] || 0) + 1;
+  for (const c in legend) {
+    const el = document.querySelector(`#types button[data-type="${CSS.escape(c)}"] .c`);
+    if (el) el.textContent = `${counts[c]}  ${(100 * counts[c] / N).toFixed(1)} %`;
+  }
+  const open = OPEN_TYPES.reduce((s, c) => s + (counts[c] || 0), 0);
+  const share = 100 * open / N;
+  const sh = $('share');
+  sh.textContent = share.toFixed(1) + ' %';
+  sh.className = 'big ' + (share >= 33 ? 'ok' : 'warn');
+
+  // rues étroites : épaisseur = min(série horizontale, série verticale) < 3
+  const hrun = new Uint16Array(N), vrun = new Uint16Array(N);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W;) {
+      if (grid[y * W + x] === 'r') {
+        const x0 = x; while (x < W && grid[y * W + x] === 'r') x++;
+        for (let i = x0; i < x; i++) hrun[y * W + i] = x - x0;
+      } else x++;
+    }
+  }
+  for (let x = 0; x < W; x++) {
+    for (let y = 0; y < H;) {
+      if (grid[y * W + x] === 'r') {
+        const y0 = y; while (y < H && grid[y * W + x] === 'r') y++;
+        for (let j = y0; j < y; j++) vrun[j * W + x] = y - y0;
+      } else y++;
+    }
+  }
+  narrowCells = [];
+  for (let i = 0; i < N; i++) if (grid[i] === 'r' && Math.min(hrun[i], vrun[i]) < MIN_STREET) narrowCells.push(i);
+  const nw = $('narrow');
+  nw.textContent = narrowCells.length ? `⚠ ${narrowCells.length} case(s) de rue de moins de 3 de large` : 'Aucune rue de moins de 3 cases';
+  nw.className = narrowCells.length ? 'warn' : 'ok';
+  requestRender();
+}
+
+// ---------------------------------------------------------------- panneau
+function buildTypes() {
+  const box = $('types'); box.innerHTML = '';
+  for (const c in legend) {
+    const b = document.createElement('button');
+    b.dataset.type = c;
+    b.innerHTML = `<span class="sw" style="background:${colors[c]}"></span><span class="k">${c}</span><span class="n">${legend[c]}</span><span class="c"></span>`;
+    b.onclick = () => setType(c);
+    box.appendChild(b);
+  }
+  setType(type);
+}
+function setType(c) {
+  type = c;
+  document.querySelectorAll('#types button').forEach(b => b.classList.toggle('active', b.dataset.type === c));
+}
+function setTool(t) {
+  tool = t;
+  document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('active', b.dataset.tool === t));
+  canvas.classList.toggle('pan', t === 'pan');
+  if (t !== 'monument') { selMon = -1; $('monform').hidden = true; requestRender(); }
+}
+
+function renderLists() {
+  const ml = $('monList'); ml.innerHTML = '';
+  lay.monuments.forEach((m, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${esc(m.id)} · ${m.x},${m.y} · ${m.w}×${m.h} · ${m.levels ?? 0} niv.</span>`;
+    const be = document.createElement('button'); be.textContent = '✎'; be.title = 'Modifier';
+    be.onclick = () => { setTool('monument'); selectMonument(i); };
+    const bd = document.createElement('button'); bd.textContent = '×'; bd.title = 'Supprimer';
+    bd.onclick = () => { pushUndo(); lay.monuments.splice(i, 1); selMon = -1; $('monform').hidden = true; renderLists(); requestRender(); };
+    li.append(be, bd); ml.appendChild(li);
+  });
+  const ll = $('labList'); ll.innerHTML = '';
+  lay.labels.forEach((l, i) => {
+    const li = document.createElement('li');
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = l.text;
+    inp.onchange = () => { pushUndo(); l.text = inp.value; requestRender(); };
+    const pos = document.createElement('span'); pos.textContent = `${l.x},${l.y}`; pos.style.flex = 'none';
+    const bd = document.createElement('button'); bd.textContent = '×';
+    bd.onclick = () => { pushUndo(); lay.labels.splice(i, 1); renderLists(); requestRender(); };
+    li.append(inp, pos, bd); ll.appendChild(li);
+  });
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function openMonForm(m) {
+  $('mId').value = m.id || ''; $('mLevels').value = m.levels ?? 3;
+  $('mX').value = m.x; $('mY').value = m.y; $('mW').value = m.w; $('mH').value = m.h;
+  $('mDel').hidden = selMon < 0;
+  $('monform').hidden = false;
+  $('mId').focus();
+}
+function selectMonument(i) { selMon = i; pendingMon = null; openMonForm(lay.monuments[i]); requestRender(); }
+function commitMonForm() {
+  const id = $('mId').value.trim();
+  if (!id) { $('mId').focus(); return; }
+  const m = {
+    id, x: +$('mX').value, y: +$('mY').value, w: +$('mW').value, h: +$('mH').value, levels: +$('mLevels').value,
+  };
+  if (!(m.w > 0 && m.h > 0) || m.x < 0 || m.y < 0 || m.x + m.w > lay.cols || m.y + m.h > lay.rows) { msg('monument hors grille'); return; }
+  const dup = lay.monuments.findIndex((o, i) => o.id === id && i !== selMon);
+  if (dup >= 0) { msg(`id « ${id} » déjà utilisé`); return; }
+  pushUndo();
+  if (selMon >= 0) lay.monuments[selMon] = m; else lay.monuments.push(m);
+  selMon = -1; pendingMon = null; $('monform').hidden = true; msg('');
+  renderLists(); requestRender();
+}
+
+// ---------------------------------------------------------------- vue
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  const r = canvas.getBoundingClientRect();
+  canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+  requestRender();
+}
+function fit() {
+  if (!lay) return;
+  const r = canvas.getBoundingClientRect();
+  const s = Math.min((r.width - MARGIN - 20) / lay.cols, (r.height - MARGIN - 20) / lay.rows);
+  view.scale = Math.max(1, s);
+  view.ox = MARGIN + (r.width - MARGIN - lay.cols * view.scale) / 2;
+  view.oy = MARGIN + (r.height - MARGIN - lay.rows * view.scale) / 2;
+  requestRender();
+}
+function zoomAt(f, sx, sy) {
+  const ns = Math.min(80, Math.max(1, view.scale * f));
+  view.ox = sx - (sx - view.ox) * ns / view.scale;
+  view.oy = sy - (sy - view.oy) * ns / view.scale;
+  view.scale = ns;
+  requestRender();
+}
+function toCell(sx, sy) { return { x: Math.floor((sx - view.ox) / view.scale), y: Math.floor((sy - view.oy) / view.scale) }; }
+function cellToScreen(x, y) { return { x: view.ox + (x + 0.5) * view.scale, y: view.oy + (y + 0.5) * view.scale }; }
+
+function requestRender() {
+  if (needRender) return;
+  needRender = true;
+  requestAnimationFrame(() => { needRender = false; render(); });
+}
+
+function render() {
+  const W = canvas.width / dpr, H = canvas.height / dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = '#f4f2ee'; ctx.fillRect(0, 0, W, H);
+  if (!lay) return;
+  const s = view.scale;
+  ctx.save();
+  ctx.translate(view.ox, view.oy);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, lay.cols * s, lay.rows * s);
+  if (bgImg) {
+    ctx.globalAlpha = bg.opacity;
+    const h = bg.w * bgImg.height / bgImg.width;
+    ctx.drawImage(bgImg, bg.x * s, bg.y * s, bg.w * s, h * s);
+    ctx.globalAlpha = 1;
+  }
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = bgImg ? cellOpacity : 1;
+  ctx.drawImage(off, 0, 0, lay.cols * s, lay.rows * s);
+  ctx.globalAlpha = 1;
+  ctx.imageSmoothingEnabled = true;
+
+  // aperçu de l'opération en cours
+  if (drag && drag.preview) {
+    const p = drag.preview;
+    ctx.fillStyle = drag.kind === 'monument' ? 'rgba(31,95,191,.35)' : hexA(colors[type], .6);
+    const xa = Math.min(p.x0, p.x1), ya = Math.min(p.y0, p.y1);
+    const w = Math.abs(p.x1 - p.x0) + 1, h = Math.abs(p.y1 - p.y0) + 1;
+    ctx.fillRect(xa * s, ya * s, w * s, h * s);
+  }
+
+  // grille
+  if ($('cbGrid').checked && s >= 4) {
+    ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 0; x <= lay.cols; x++) { ctx.moveTo(x * s + .5, 0); ctx.lineTo(x * s + .5, lay.rows * s); }
+    for (let y = 0; y <= lay.rows; y++) { ctx.moveTo(0, y * s + .5); ctx.lineTo(lay.cols * s, y * s + .5); }
+    ctx.stroke();
+  }
+  // bandes A–G / 1–4 (repères papier)
+  ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let i = 0; i <= BANDS_X.length; i++) { const x = Math.round(i * lay.cols / BANDS_X.length) * s; ctx.moveTo(x, 0); ctx.lineTo(x, lay.rows * s); }
+  for (let j = 0; j <= BANDS_Y.length; j++) { const y = Math.round(j * lay.rows / BANDS_Y.length) * s; ctx.moveTo(0, y); ctx.lineTo(lay.cols * s, y); }
+  ctx.stroke();
+
+  // rues étroites
+  if ($('cbNarrow').checked && narrowCells.length) {
+    ctx.fillStyle = 'rgba(193,39,45,.55)';
+    for (const i of narrowCells) ctx.fillRect((i % lay.cols) * s, Math.floor(i / lay.cols) * s, s, s);
+  }
+
+  // monuments hachurés
+  lay.monuments.forEach((m, i) => {
+    ctx.save();
+    ctx.beginPath(); ctx.rect(m.x * s, m.y * s, m.w * s, m.h * s); ctx.clip();
+    ctx.strokeStyle = i === selMon ? '#1f5fbf' : 'rgba(0,0,0,.55)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    const step = Math.max(4, s);
+    for (let d = -m.h * s; d < m.w * s; d += step) { ctx.moveTo(m.x * s + d, m.y * s); ctx.lineTo(m.x * s + d + m.h * s, m.y * s + m.h * s); }
+    ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = i === selMon ? '#1f5fbf' : '#000'; ctx.lineWidth = i === selMon ? 3 : 1.5;
+    ctx.strokeRect(m.x * s, m.y * s, m.w * s, m.h * s);
+    if (s >= 3) {
+      ctx.font = `${Math.max(10, Math.min(14, s * 1.6))}px sans-serif`; ctx.fillStyle = '#000';
+      ctx.textBaseline = 'top'; ctx.fillText(m.id, m.x * s + 3, m.y * s + 2);
+    }
+  });
+  // labels
+  ctx.font = `${Math.max(10, Math.min(16, s * 1.8))}px sans-serif`; ctx.textBaseline = 'middle';
+  for (const l of lay.labels) {
+    const tx = (l.x + .5) * s, ty = (l.y + .5) * s;
+    const w = ctx.measureText(l.text).width;
+    ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(tx - 3, ty - 9, w + 6, 18);
+    ctx.fillStyle = '#1f5fbf'; ctx.fillText(l.text, tx, ty);
+  }
+  ctx.restore();
+
+  // marges avec A–G / 1–4
+  ctx.fillStyle = '#f4f2ee'; ctx.fillRect(0, 0, W, MARGIN); ctx.fillRect(0, 0, MARGIN, H);
+  ctx.fillStyle = '#333'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let i = 0; i < BANDS_X.length; i++) {
+    const x = view.ox + (i + .5) * lay.cols / BANDS_X.length * s;
+    if (x > MARGIN && x < W) ctx.fillText(BANDS_X[i], x, MARGIN / 2);
+  }
+  for (let j = 0; j < BANDS_Y.length; j++) {
+    const y = view.oy + (j + .5) * lay.rows / BANDS_Y.length * s;
+    if (y > MARGIN && y < H) ctx.fillText(BANDS_Y[j], MARGIN / 2, y);
+  }
+  ctx.textAlign = 'start';
+}
+function hexA(h, a) { return `rgba(${parseInt(h.slice(1, 3), 16)},${parseInt(h.slice(3, 5), 16)},${parseInt(h.slice(5, 7), 16)},${a})`; }
+
+// ---------------------------------------------------------------- souris
+function evPos(e) { const r = canvas.getBoundingClientRect(); return { sx: e.clientX - r.left, sy: e.clientY - r.top }; }
+
+canvas.addEventListener('pointerdown', e => {
+  if (!lay) return;
+  canvas.setPointerCapture(e.pointerId);
+  const { sx, sy } = evPos(e);
+  const c = toCell(sx, sy);
+  const panning = tool === 'pan' || spaceDown || e.button === 1;
+  if (panning) { drag = { kind: 'pan', sx, sy, ox: view.ox, oy: view.oy }; return; }
+  if (e.button !== 0) return;
+  if (tool === 'pencil') {
+    pushUndo();
+    if (e.shiftKey && lastPaint) paintLine(lastPaint.x, lastPaint.y, c.x, c.y, type);
+    else setCell(c.x, c.y, type);
+    lastPaint = c; drag = { kind: 'pencil', last: c };
+    rebuildCells();
+  } else if (tool === 'rect' || tool === 'monument') {
+    if (tool === 'monument') {
+      const hit = lay.monuments.findIndex(m => c.x >= m.x && c.x < m.x + m.w && c.y >= m.y && c.y < m.y + m.h);
+      if (hit >= 0) { selectMonument(hit); return; }
+    }
+    drag = { kind: tool, preview: { x0: c.x, y0: c.y, x1: c.x, y1: c.y } };
+    requestRender();
+  } else if (tool === 'bucket') {
+    pushUndo(); bucket(c.x, c.y, type); rebuildCells(); updateStats();
+  } else if (tool === 'label') {
+    if (!inGrid(c.x, c.y)) return;
+    const t = prompt('Texte du label :');
+    if (t) { pushUndo(); lay.labels.push({ text: t, x: c.x, y: c.y }); renderLists(); requestRender(); }
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (!lay) return;
+  const { sx, sy } = evPos(e);
+  const c = toCell(sx, sy);
+  $('hud').textContent = inGrid(c.x, c.y)
+    ? `x ${c.x}  y ${c.y}  ${BANDS_X[Math.min(6, Math.floor(c.x * 7 / lay.cols))]}${BANDS_Y[Math.min(3, Math.floor(c.y * 4 / lay.rows))]}  [${grid[c.y * lay.cols + c.x]}]  zoom ${view.scale.toFixed(1)}`
+    : `zoom ${view.scale.toFixed(1)}`;
+  if (!drag) return;
+  if (drag.kind === 'pan') { view.ox = drag.ox + sx - drag.sx; view.oy = drag.oy + sy - drag.sy; requestRender(); }
+  else if (drag.kind === 'pencil') {
+    if (c.x !== drag.last.x || c.y !== drag.last.y) { paintLine(drag.last.x, drag.last.y, c.x, c.y, type); drag.last = c; lastPaint = c; rebuildCells(); }
+  } else if (drag.preview) {
+    drag.preview.x1 = Math.max(0, Math.min(lay.cols - 1, c.x)); drag.preview.y1 = Math.max(0, Math.min(lay.rows - 1, c.y)); requestRender();
+  }
+});
+function endDrag(e) {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.kind === 'pencil') updateStats();
+  else if (d.kind === 'rect') { pushUndo(); paintRect(d.preview.x0, d.preview.y0, d.preview.x1, d.preview.y1, type); rebuildCells(); updateStats(); }
+  else if (d.kind === 'monument') {
+    const p = d.preview;
+    const x = Math.max(0, Math.min(p.x0, p.x1)), y = Math.max(0, Math.min(p.y0, p.y1));
+    const w = Math.min(lay.cols - x, Math.abs(p.x1 - p.x0) + 1), h = Math.min(lay.rows - y, Math.abs(p.y1 - p.y0) + 1);
+    if (w >= 2 && h >= 2) { selMon = -1; pendingMon = { x, y, w, h }; openMonForm({ id: '', levels: 3, x, y, w, h }); }
+  }
+  requestRender();
+}
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('wheel', e => {
+  if (!lay) return;
+  e.preventDefault();
+  const { sx, sy } = evPos(e);
+  if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * 0.01), sx, sy);
+  else { view.ox -= e.deltaX; view.oy -= e.deltaY; requestRender(); }
+}, { passive: false });
+
+// glisser-déposer
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; $('drop').classList.add('on'); });
+window.addEventListener('dragleave', e => { e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; $('drop').classList.remove('on'); } });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => {
+  e.preventDefault(); dragDepth = 0; $('drop').classList.remove('on');
+  for (const f of e.dataTransfer.files) openFile(f);
+});
+
+function openFile(f) {
+  if (f.type.startsWith('image/')) return loadBackground(f);
+  const rd = new FileReader();
+  rd.onload = () => {
+    try { setLayout(JSON.parse(rd.result), f.name); }
+    catch (err) { msg('JSON illisible : ' + err.message); }
+  };
+  rd.readAsText(f);
+}
+function loadBackground(f) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    const im = new Image();
+    im.onload = () => { bgImg = im; bg.name = f.name; $('bBgOff').disabled = false; requestRender(); };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+}
+
+// ---------------------------------------------------------------- clavier
+window.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea') {
+    if (e.key === 'Enter' && !$('monform').hidden && e.target.closest('#monform')) commitMonForm();
+    if (e.key === 'Escape') { $('monform').hidden = true; selMon = -1; pendingMon = null; requestRender(); }
+    return;
+  }
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); exportFile(); return; }
+  if (mod) return;
+  if (e.key === ' ') { spaceDown = true; canvas.classList.add('pan'); e.preventDefault(); return; }
+  if (e.key in legend) { setType(e.key); return; }
+  const k = e.key.toLowerCase();
+  if (k === 'b') setTool('pencil'); else if (k === 'e') setTool('rect');
+  else if (k === 'g') setTool('bucket'); else if (k === 'm') setTool('monument');
+  else if (k === 't') setTool('label'); else if (k === 'h') setTool('pan');
+  else if (e.key === '+' || e.key === '=') zoomAt(1.25, canvas.clientWidth / 2, canvas.clientHeight / 2);
+  else if (e.key === '-') zoomAt(0.8, canvas.clientWidth / 2, canvas.clientHeight / 2);
+  else if (e.key === '0') fit();
+  else if (e.key === 'Escape') { drag = null; $('monform').hidden = true; selMon = -1; pendingMon = null; requestRender(); }
+});
+window.addEventListener('keyup', e => { if (e.key === ' ') { spaceDown = false; if (tool !== 'pan') canvas.classList.remove('pan'); } });
+
+// ---------------------------------------------------------------- panneau : événements
+$('fLayout').addEventListener('change', e => { if (e.target.files[0]) openFile(e.target.files[0]); e.target.value = ''; });
+$('fBg').addEventListener('change', e => { if (e.target.files[0]) loadBackground(e.target.files[0]); e.target.value = ''; });
+$('bBgOff').onclick = () => { bgImg = null; $('bBgOff').disabled = true; requestRender(); };
+$('bNew').onclick = () => { if (!lay || confirm('Remplacer la grille en cours par une grille vide ?')) setLayout(newLayout(), 'layout.json'); };
+$('bExport').onclick = exportFile;
+$('bUndo').onclick = undo; $('bRedo').onclick = redo; $('bFit').onclick = fit;
+$('cbGrid').onchange = requestRender; $('cbNarrow').onchange = requestRender;
+$('bgOp').oninput = e => { bg.opacity = +e.target.value; requestRender(); };
+$('cellOp').oninput = e => { cellOpacity = +e.target.value; requestRender(); };
+for (const k of ['X', 'Y', 'W']) $('bg' + k).oninput = e => { bg[k.toLowerCase()] = +e.target.value || 0; requestRender(); };
+document.querySelectorAll('#tools button').forEach(b => b.onclick = () => setTool(b.dataset.tool));
+$('mOk').onclick = commitMonForm;
+$('mCancel').onclick = () => { $('monform').hidden = true; selMon = -1; pendingMon = null; requestRender(); };
+$('mDel').onclick = () => { if (selMon < 0) return; pushUndo(); lay.monuments.splice(selMon, 1); selMon = -1; $('monform').hidden = true; renderLists(); requestRender(); };
+window.addEventListener('resize', resize);
+
+// ---------------------------------------------------------------- démarrage
+resize();
+setTool('pencil');
+setLayout(newLayout(), 'layout.json');
+updateUndoButtons();
+
+// API minimale pour les tests automatisés (tools/layout-editor/test_editor.py)
+window.editor = {
+  load: (obj, name) => setLayout(obj, name), toJSON, cellToScreen, toCell,
+  get grid() { return grid.join(''); }, get layout() { return lay; }, setTool, setType, fit,
+  stats: () => ({ share: $('share').textContent, narrow: narrowCells.length }),
+};
+})();
+</script>
+</body>
+</html>
