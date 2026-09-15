@@ -1,0 +1,15 @@
+{
+  "source": "data/castres.osm",
+  "bbox": {
+    "south": 43.5995,
+    "west": 2.231,
+    "north": 43.6095,
+    "east": 2.25
+  },
+  "width_px": 3000,
+  "height_px": 2181,
+  "m_per_px": 0.5099,
+  "width_m": 1529.8,
+  "height_m": 1111.9,
+  "projection": "équirectangulaire locale, lat0=43.60450"
+}
