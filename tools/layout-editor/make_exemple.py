@@ -56,7 +56,7 @@ def main():
                    "w": "eau", "q": "quai", ".": "vide"},
         "monuments": [
             {"id": "saint-benoit", "x": 56, "y": 32, "w": 10, "h": 14, "levels": 3},
-            {"id": "eveche", "x": 20, "y": 18, "w": 12, "h": 7, "levels": 3},
+            {"id": "eveche-mairie", "x": 20, "y": 18, "w": 12, "h": 7, "levels": 3},
             {"id": "jardin-eveche", "x": 20, "y": 32, "w": 14, "h": 10, "levels": 0},
             {"id": "theatre", "x": 38, "y": 32, "w": 7, "h": 6, "levels": 3},
             {"id": "maisons-agout", "x": 56, "y": 48, "w": 20, "h": 4, "levels": 3},

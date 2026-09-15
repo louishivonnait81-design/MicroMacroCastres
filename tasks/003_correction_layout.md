@@ -21,7 +21,7 @@ Passer du brouillon automatique (`data/layout.json`, fiche 002) à un plan de je
 4. **Louis** : imprimer l'A3 à 100 %, poser à côté de la carte MicroMacro, répondre par oui ou non à la question « est-ce que ça se compare : rues, îlots, place, rivière ? ». Si non, retour à l'étape 1 avec la liste des quartiers à revoir.
 
 ## Critère de réussite
-`check_layout.py` accepte `data/layout.json` avec les 7 monuments présents (saint-benoit, eveche, jardin-eveche, theatre, maisons-agout, pont-vieux, pont-neuf), aucune case vide (`.`), au moins 8 labels de lieux à histoires ; `out/layout_A3.pdf` imprimé et jugé « comparable » par Louis. Le pourcentage de vide n'est qu'une information.
+`check_layout.py` accepte `data/layout.json` avec les 8 monuments présents (saint-benoit, eveche-mairie, jardin-eveche, theatre, saint-jacques, maisons-agout, pont-vieux, pont-neuf), aucune case vide (`.`), au moins 8 labels de lieux à histoires ; `out/layout_A3.pdf` imprimé et jugé « comparable » par Louis. Le pourcentage de vide n'est qu'une information.
 
 ## Hors périmètre
 Les volumes (fiche 004, `01_layout_to_blocks.py`), tout rendu Blender, Gemini.

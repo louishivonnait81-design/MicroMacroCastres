@@ -90,7 +90,7 @@ OPEN = "rbpP"
 MONUMENT_GROW = 0.30
 MONUMENTS = [            # id, regex sur le nom OSM, lettre, niveaux
     ("saint-benoit", r"Cathédrale Saint-Beno[iî]t", "I", 3),
-    ("eveche", r"Hôtel de Ville de Castres|Musée Goya", "I", 3),
+    ("eveche-mairie", r"Hôtel de Ville de Castres|Musée Goya", "I", 3),   # palais de l'Évêché = hôtel de ville + musée Goya
     ("jardin-eveche", r"Jardin de l'?[ÉE]v[êe]ch[ée]", "P", 0),
     ("theatre", r"Théâtre [Mm]unicipal", "I", 3),
     ("saint-jacques", r"^Église Saint-Jacques", "I", 3),
@@ -1039,6 +1039,7 @@ def preview(layout, path, log, cell=20, margin=70):
         d.text((ox + (i + .5) * COLS / nx * cell, oy - 24), L, fill=(0, 0, 0), font=big, anchor="mm")
     for j, L in enumerate(BANDS_Y):
         d.text((ox - 30, oy + (j + .5) * ROWS / ny * cell), L, fill=(0, 0, 0), font=big, anchor="mm")
+    used_labels = []
     for m in layout["monuments"]:
         x0, y0 = ox + m["x"] * cell, oy + m["y"] * cell
         x1, y1 = x0 + m["w"] * cell, y0 + m["h"] * cell
@@ -1053,7 +1054,13 @@ def preview(layout, path, log, cell=20, margin=70):
             if xb > xa:
                 d.line([xa, ya, xb, yb], fill=(0, 0, 0), width=1)
         d.rectangle([x0, y0, x1, y1], outline=(0, 0, 0), width=3)
-        d.text((x0 + 4, y0 + 2), m["id"], fill=(0, 0, 0), font=small)
+        lx_, ly_ = x0 + 4, y0 + 2
+        if any(abs(lx_ - ux) < 60 and abs(ly_ - uy) < 20 for ux, uy in used_labels):
+            lx_, ly_ = x0 + 4, y1 - 20
+        tw_ = d.textlength(m["id"], font=small)
+        d.rectangle([lx_ - 2, ly_ - 1, lx_ + tw_ + 2, ly_ + 17], fill=(255, 255, 255))
+        d.text((lx_, ly_), m["id"], fill=(0, 0, 0), font=small)
+        used_labels.append((lx_, ly_))
     for l in layout["labels"]:
         x, y = ox + (l["x"] + .5) * cell, oy + (l["y"] + .5) * cell
         tw = d.textlength(l["text"], font=small)

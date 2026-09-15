@@ -141,7 +141,7 @@ def main():
               f"monument créé : {m}")
         page.keyboard.press("n")
         click_cell(page, 22, 20)                      # clic sur eveche → sélection
-        check(page.input_value("#mId") == "eveche", "clic sur un monument existant le sélectionne")
+        check(page.input_value("#mId") == "eveche-mairie", "clic sur un monument existant le sélectionne")
         page.click("#mCancel")
         if a.shots:
             page.keyboard.press("c")

@@ -20,7 +20,7 @@ import sys
 DEFAULT_LEGEND = {"r": "rue", "b": "boulevard", "I": "ilot", "m": "maison", "p": "place", "P": "parc",
                   "w": "eau", "q": "quai", ".": "vide"}
 OPEN_TYPES = "rbpP"       # voies + places + parcs : la part de « vide »
-EXPECTED_MONUMENTS = ["saint-benoit", "eveche", "jardin-eveche", "theatre", "maisons-agout", "pont-vieux", "pont-neuf"]
+EXPECTED_MONUMENTS = ["saint-benoit", "eveche-mairie", "jardin-eveche", "theatre", "saint-jacques", "maisons-agout", "pont-vieux", "pont-neuf"]
 STREET = "rb"
 MIN_STREET = 3
 
@@ -152,7 +152,7 @@ def main():
         print(f"  rues + places + parcs : {st['open_share']} % de la grille, {st['open_share_land']} % hors eau (objectif ≥ 33 %) → {ok}")
         print(f"  cases de voie < 3 de large : {st['narrow_street_cells']} (venelles et ruelles comprises)")
         miss = st["monuments_missing"]
-        print(f"  monuments : {st['monuments']}" + (f", MANQUANTS : {', '.join(miss)}" if miss else ", les 7 attendus sont présents"))
+        print(f"  monuments : {st['monuments']}" + (f", MANQUANTS : {', '.join(miss)}" if miss else ", les " + str(len(EXPECTED_MONUMENTS)) + " attendus sont présents"))
         print(f"  maisons uniques (m) : {st['houses']}, cases vides (.) : {st['empty']}, labels : {st['labels']}")
 
 

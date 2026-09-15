@@ -63,7 +63,7 @@ Tout ce qui n'est pas dans cette liste est simplifié ou omis.
 | id | Nom | Emprise réelle (cases) | Emprise +30 % | Hauteur |
 |---|---|---|---|---|
 | saint-benoit | cathédrale Saint-Benoît | 46 | 60 | 3 + clocher 6 |
-| eveche | palais de l'Évêché (hôtel de ville / musée Goya) | 65 | 84 | 3 |
+| eveche-mairie | palais de l'Évêché = hôtel de ville et musée Goya (OSM : « Hôtel de Ville de Castres ») | 65 | 84 | 3 |
 | jardin-eveche | jardin de l'Évêché | 300 | 390 | — |
 | theatre | théâtre municipal | 31 | 40 | 3 + fronton |
 | saint-jacques | église Saint-Jacques de Villegoudou | 30 | 39 | 3 + clocher |

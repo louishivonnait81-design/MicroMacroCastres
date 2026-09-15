@@ -77,6 +77,7 @@ def main():
         d.text((ox + (i + .5) * cols / len(bx) * cell, oy - mm(6)), L, fill=(0, 0, 0), font=big, anchor="mm")
     for j, L in enumerate(by):
         d.text((ox - mm(8), oy + (j + .5) * rows / len(by) * cell), L, fill=(0, 0, 0), font=big, anchor="mm")
+    used_labels = []
     for m in lay.get("monuments", []):
         x0, y0 = ox + m["x"] * cell, oy + m["y"] * cell
         x1, y1 = x0 + m["w"] * cell, y0 + m["h"] * cell
@@ -90,7 +91,13 @@ def main():
             if xb > xa:
                 d.line([xa, ya, xb, yb], fill=(0, 0, 0), width=1)
         d.rectangle([x0, y0, x1, y1], outline=(0, 0, 0), width=mm(0.3))
-        d.text((x0 + 3, y0 + 2), m["id"], fill=(0, 0, 0), font=tiny)
+        lx_, ly_ = x0 + 3, y0 + 2
+        if any(abs(lx_ - ux) < mm(15) and abs(ly_ - uy) < mm(4) for ux, uy in used_labels):
+            lx_, ly_ = x0 + 3, y1 - mm(3.5)
+        tw_ = d.textlength(m["id"], font=tiny)
+        d.rectangle([lx_ - 1, ly_, lx_ + tw_ + 1, ly_ + mm(2.6)], fill=(255, 255, 255))
+        d.text((lx_, ly_), m["id"], fill=(0, 0, 0), font=tiny)
+        used_labels.append((lx_, ly_))
     for l in lay.get("labels", []):
         x, y = ox + (l["x"] + .5) * cell, oy + (l["y"] + .5) * cell
         tw = d.textlength(l["text"], font=small)
