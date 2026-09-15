@@ -70,6 +70,7 @@ BANDS_X, BANDS_Y = ("1234", "ABCDEFG") if COLS < ROWS else ("ABCDEFG", "1234")
 # primaire 3, cinq rues nommées de DECISIONS 4, boulevards Léon Bourgeois /
 # Miredames / Henri Sizaire et quais 5
 VENELLE_W, RUE_W, AVENUE_W, STREET_W, BOULEVARD_W = 1, 2, 3, 4, 5
+QUAI_RES_W = 5           # quais résidentiels (Tourcaudière, du Carras, du Moulin…) : 5 = règle « quais 5 », 2 = largeur réelle
 MIN_RUN, BAND = 8, 2.0
 NAMED_STREETS = [r"Rue Sabatier$", r"Rue Frédéric Thomas", r"Rue Victor Hugo", r"Rue de l'Hôtel de Ville",
                  r"Rue Villegoudou", r"Quai des Jacobins", r"^Pont Vieux", r"^Pont Neuf"]
@@ -514,8 +515,11 @@ def classify(tags, name):
     for pat, w_ in WIDTH_EXCEPTIONS.items():
         if re.compile(pat).search(name):
             return dict(w=w_, ch="r", kind=f"exception {w_}", named=True), None
-    if any(re.compile(p).search(name) for p in BIG_BOULEVARDS) or first == "Quai":
+    if any(re.compile(p).search(name) for p in BIG_BOULEVARDS) or (first == "Quai" and hw in ("primary", "secondary", "tertiary")):
         return dict(w=BOULEVARD_W, ch="b", kind=f"boulevard / quai {BOULEVARD_W}", named=True), None
+    if first == "Quai":
+        # quai résidentiel (rue de 8 m le long de l'eau) : largeur QUAI_RES_W
+        return dict(w=QUAI_RES_W, ch="b" if QUAI_RES_W >= 4 else "r", kind=f"quai résidentiel {QUAI_RES_W}", named=True), None
     if named:
         return dict(w=STREET_W, ch="r", kind=f"rue nommée {STREET_W}", named=True), None
     if first in ("Boulevard", "Avenue", "Allées") or hw in ("primary", "secondary", "primary_link", "secondary_link"):
@@ -1150,11 +1154,14 @@ def main():
     ap.add_argument("--fond", default="data/fond_castres_grille.png", help="fond recadré sur la grille ('' pour ne pas le produire)")
     ap.add_argument("--rotate", default=None, help="angle de la grille en degrés, ou 'auto' ; défaut : CORE['angle'] (-5,5°)")
     ap.add_argument("--named-width", type=int, default=None, help="largeur des cinq rues nommées (défaut STREET_W = 4)")
+    ap.add_argument("--quai-width", type=int, default=None, help="largeur des quais résidentiels (défaut QUAI_RES_W = 5)")
     ap.add_argument("--core", default=None, help="du,dv,facteur : centre du cœur en mètres tournés depuis le repère, et cases par mètre (défaut : CORE)")
     ap.add_argument("--dropped", default="out/voies_supprimees.txt", help="liste des voies supprimées avec la raison")
     a = ap.parse_args()
     if a.named_width:
         globals()["STREET_W"] = a.named_width
+    if a.quai_width:
+        globals()["QUAI_RES_W"] = a.quai_width
     core = None
     if a.core:
         du, dv, f_ = (float(x) for x in a.core.split(","))
