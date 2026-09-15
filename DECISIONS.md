@@ -21,6 +21,7 @@ Un jeu de type MicroMacro : une grande carte isométrique noir et blanc du vieux
 | Personnage debout | 1 de haut — **jamais réduit** |
 | Voiture | 2 × 1 |
 | Arbre (boule) | 1,5–2 de diamètre |
+| Agout | largeur réelle, 6 cases |
 | Niveau d'immeuble | 1 de haut |
 | Voie | venelle 1, ruelle 2, rue 3, rue nommée 4, boulevard / quai 6–8 |
 | Place Jean-Jaurès | emprise réelle, 19 × 8 à 0,17 |
@@ -32,6 +33,7 @@ Le périmètre est le **cœur** de la ville (ci-dessous), pas le périmètre ét
 - Toutes les voies nommées dans OSM sont gardées, avec leurs connexions ; sont écartées d'office les trottoirs, passages piétons, voies de service sans nom, `path`, `cycleway`, escaliers sans nom et doublons de trottoir. Un Castrais doit pouvoir suivre n'importe quel trajet de la vraie ville sur la carte.
 - Largeur selon le caractère : venelle 1 case, rue ordinaire 2, avenue et voie primaire 3, les cinq rues nommées 4, boulevards Léon Bourgeois / Miredames / Henri Sizaire et quais 5 (plantés). Pas d'escalier de cases : au plus un coude à angle droit toutes les 8 cases.
 - Tout ce qui n'est pas voie, place, parc ou eau est îlot, plein. Un îlot de moins de 4 cases de côté est une maison unique à 2 niveaux.
+- L'Agout est à sa largeur réelle (6 cases à 0,17). Le long de l'Agout il y a soit un trottoir (bande de quai), soit des bâtiments, jamais que la route : les voies ne recouvrent pas la bande de rive, et les maisons sur l'Agout (les Arcades, face à la façade est de la place) ont les pieds dans l'eau. Le quai des Jacobins, passage entre la façade est de la place et les Arcades, fait 2 cases.
 - Les monuments sont à leur position réelle, à leur emprise réelle OSM compressée agrandie de 30 % dans les îlots voisins uniquement, jamais sur une voie. Une voie ne traverse pas un monument : les venelles et ruelles sous l'emprise réelle disparaissent, les autres voies sont repoussées au bord.
 - Le personnage reste 1 case : c'est l'échelle réelle de MicroMacro.
 - La part de vide n'est qu'une information.

@@ -76,7 +76,7 @@ NAMED_STREETS = [r"Rue Sabatier$", r"Rue Frédéric Thomas", r"Rue Victor Hugo",
 SKIP_CLASSES = {"motorway", "motorway_link", "trunk", "trunk_link", "track", "bus_stop", "platform",
                 "proposed", "construction", "raceway", "elevator"}
 
-WATER_MIN_W = 8          # cases : l'Agout fait 8–12 cases
+WATER_MIN_W = 6          # cases : à 0,17 l'Agout fait 6 cases à sa largeur réelle ; on ne l'élargit pas
 QUAI_W = 2
 
 OPEN = "rbpP"
@@ -487,6 +487,10 @@ def bbox_of(cells):
 # Réseau réel (règles du 16/09) : classement et largeur des voies
 # ---------------------------------------------------------------------------
 BIG_BOULEVARDS = [r"Boulevard Léon Bourgeois", r"Boulevard Miredames", r"Boulevard Henri Sizaire"]
+# Exceptions de largeur (décision du 17/09, soir) : le quai des Jacobins n'est
+# qu'un passage entre la façade est de la place Jean-Jaurès et les Arcades,
+# les maisons sur l'Agout ; il fait 2 cases, pas 5
+WIDTH_EXCEPTIONS = {r"^Quai des Jacobins": 2}
 
 
 def classify(tags, name):
@@ -507,6 +511,9 @@ def classify(tags, name):
         return None, "escalier non nommé"
     first = name.split(" ")[0] if name else ""
     named = any(re.compile(p).search(name) for p in NAMED_STREETS)
+    for pat, w_ in WIDTH_EXCEPTIONS.items():
+        if re.compile(pat).search(name):
+            return dict(w=w_, ch="r", kind=f"exception {w_}", named=True), None
     if any(re.compile(p).search(name) for p in BIG_BOULEVARDS) or first == "Quai":
         return dict(w=BOULEVARD_W, ch="b", kind=f"boulevard / quai {BOULEVARD_W}", named=True), None
     if named:
@@ -788,7 +795,8 @@ def build(osm_path, rotate=None, core=None, verbose=True):
     center_cells = {}          # id de voie → cases de l'axe
     node_streets = {}          # nœud OSM → ids des voies qui le contiennent
     for st in streets:
-        allow = (lambda x, y: grid[y][x] not in "p") if st["bridge"] else (lambda x, y: grid[y][x] not in "wp")
+        # le long de l'Agout : trottoir (q) ou bâtiments, jamais que la route → les voies ne recouvrent pas la bande de rive
+        allow = (lambda x, y: grid[y][x] not in "p") if st["bridge"] else (lambda x, y: grid[y][x] not in "wqp")
         for a, b in st["segs"]:
             stamp_line(grid, a, b, st["w"], st["ch"], allow)
             if st["named"]:
@@ -851,14 +859,14 @@ def build(osm_path, rotate=None, core=None, verbose=True):
             fill_polygon(layer, ring, "X")
         return {(x, y) for y in range(ROWS) for x in range(COLS) if layer[y][x] == "X"}
 
-    def place_monument(mid_, rings, ch, levels, label, grow=MONUMENT_GROW):
+    def place_monument(mid_, rings, ch, levels, label, grow=MONUMENT_GROW, box=True):
         # un monument déjà posé n'est jamais recouvert par le suivant (le jardin entoure le palais)
-        F = {c for c in footprint_cells(rings) if grid[c[1]][c[0]] not in "wqp" and not protected[c[1]][c[0]]}
+        F = {c for c in footprint_cells(rings) if grid[c[1]][c[0]] not in "wp" and not protected[c[1]][c[0]]}
         if not F:
             say(f"ATTENTION : {mid_} ← « {label} » : emprise réelle vide dans la grille")
             return None
         real = len(F)
-        if ch == "I":
+        if ch == "I" and box:
             # un monument bâti est une boîte pleine : le rectangle englobant de
             # l'emprise réelle, élargi côté îlots jusqu'à atteindre +grow en surface
             x0, y0, w, h = bbox_of(list(F))
@@ -866,7 +874,7 @@ def build(osm_path, rotate=None, core=None, verbose=True):
 
             def box_cells(ax, ay, bx, by):
                 return {(x, y) for y in range(ay, by + 1) for x in range(ax, bx + 1)
-                        if inside(x, y) and grid[y][x] not in "wqp" and not protected[y][x]}
+                        if inside(x, y) and grid[y][x] not in "wp" and not protected[y][x]}
             target = int(round(real * (1 + grow)))
             for _ in range(20):
                 if len(box_cells(x0, y0, x1, y1)) >= target:
@@ -990,7 +998,8 @@ def build(osm_path, rotate=None, core=None, verbose=True):
             if yy in banks and banks[yy] - 5 <= cx < banks[yy]:
                 rings.append(pts)
         if rings:
-            place_monument("maisons-agout", rings, "I", 3, f"{len(rings)} bâtiments OSM sur la rive gauche entre les ponts", grow=0.0)
+            # rangée de maisons : on garde les emprises réelles (pas de boîte), les pieds dans l'eau
+            place_monument("maisons-agout", rings, "I", 3, f"{len(rings)} bâtiments OSM sur la rive gauche entre les ponts", grow=0.0, box=False)
         else:
             say("ATTENTION : aucun bâtiment OSM trouvé sur la rive gauche entre les ponts")
 
@@ -1140,9 +1149,12 @@ def main():
     ap.add_argument("--preview", default="out/layout_preview.png")
     ap.add_argument("--fond", default="data/fond_castres_grille.png", help="fond recadré sur la grille ('' pour ne pas le produire)")
     ap.add_argument("--rotate", default=None, help="angle de la grille en degrés, ou 'auto' ; défaut : CORE['angle'] (-5,5°)")
+    ap.add_argument("--named-width", type=int, default=None, help="largeur des cinq rues nommées (défaut STREET_W = 4)")
     ap.add_argument("--core", default=None, help="du,dv,facteur : centre du cœur en mètres tournés depuis le repère, et cases par mètre (défaut : CORE)")
     ap.add_argument("--dropped", default="out/voies_supprimees.txt", help="liste des voies supprimées avec la raison")
     a = ap.parse_args()
+    if a.named_width:
+        globals()["STREET_W"] = a.named_width
     core = None
     if a.core:
         du, dv, f_ = (float(x) for x in a.core.split(","))
