@@ -2,7 +2,7 @@
  "cols": 106,
  "rows": 71,
  "cell_cm": 1.0,
- "cells": "mbbbbbIIIIIIIIIIrrrrrrrrrrrrrIIIIIIIIIIIIrrrrrrrrrrrrrrrrIIIIrbbwwwwwwwwbbbbbbbbbbbbbbbbbrrrmmmrrrIIIIIIII\nbbbbbbIIIIIIIIIIIIIIIIIIIIrrrIIIIIIIIIIIIrrmrmmmrrrrrrrrrIIIIrbbwwwwwwwwbbbbbbbbbbbbbbbbbrrrmmmrrrIIIIIIII\nbbbbbrrrrrrrrrrrIIIIIIIIIIrrrIIIIIIIIIIrrrrrrmmmrrrrrrrrIIIIIrrmbwwwwwwwbbbmmmmmmmmmmmmmmrrrmmmrrrIIIIIIII\nbbbbbrrrrrrrrrrrrIIIIIIIIIrrrIIIIIIIIIrrrrrrrmmmrrrrrrrrIIIIIrrmbwwwwwwwbbbrrrrrrrrrrrrrrrrrrrrrrrIIIIIIII\nbbbbbrrrrrrrrrrrrIIIIIIIIIrrrIIIIIIIIIrrmmmrrmmmrrrrrrIIIIIIIrrmmqwwwwwwwbbrrrrrrrrrrrrrrrrrrrrrrrIIIIIIII\nbbbbbIIIIIIIIIrrrIIIIIIIIIrrrIIIIIIIIIrrmmmrrrrrrrIrrrrrrrrrrrrmmqwwwwwwwbbrrrrrrrmmrrmmmrrrrrrrrrrrrrrrrr\nbbbbbIIIIIrrrrrrrIIIIIIrrrrrrIIIIIIIIIrrrrrrrrrrrrIrrrrrrrrrrrrrrrwwwwwwwbbrrrrrrrmmrrmmmrrrmrrrrrrrrrrrrr\nbbbbbIIIIrrrrrrrrIIIIIrrrrrrrIIIIIIIIIrrrrrrrrIIIIIrrrrrrrrrrrrrrrrrrrrrrrrrmmmrrmmmrrmmmrrrmrrrrmmmrrrrrr\nbbbbbIIIIrrIIIrrrrrrrrrrrrrrIIIIIIIIIIrrmmmrrrIIIIIrrrrrrrmmmmmrrmrrrrrrrrrrmmmrrmmmrrmmmrrrmrrrrmmmrrrrrr\nbbbbbIIIIrrIIIrrrrrrrrrrrrrrrrrrrrrrrIrrmmmmPPPIIIIrrrrrrrmmmmmrrrrrrrrrrrrrrrrrrmmmrrmmmrrrmrrrrmmmrrrmmm\nbbbbbrrrrrrIIIIrrrrrrrrrrrrrrrrrrrrrrIrrrrrrrrrIIIrrrrrrrrmmmmmrrrrrrrrrrrrrrrrrrrrrrrrrrrrrmrrrrrrrrrrmmm\nbbbbbrrrrrrIIIIIIIIIIIrrIrrrIIIIIIIrrIrrrrrrrrrIIIrrIIIrrrrrrrrrrrmbwwbbrrrmmmrrrrrrrrrrrrrrmrrrrrrrrrrmmm\nbbbbbIIIrrrIIIIIIIIIIIrrIrrrIIIIIIIrrIrrmmmmmrrrrrrrIIIIrrrrrrrrrrmbwwwwwwrmmmrrIIIIrrIrrrrrmmmrrmmmrrrrrr\nbbbbbIIIrrrIIIIIIIIIIIrrIrrrIIIIIIIrrIrrmmmmmrrrrrrrrIIIrrmmmmrrrrrbwwwwwwwqmmrrIIIIrrIrrrrrmmmrrmmmrrrrrr\nbbbIIIIIrrrIIIIIIIIIIIrrIrrrIIIIIIIrrrrrrrrrrrrrrrrrrPIIrrmmmmrrrrrbwwwwwwwqmmrrIIIIrrIrrrrrrmmrrmmmrrrIII\nbbbIIIIIrrrIIIIIIIIIIIrrIrrrIIIIIIIrrrrrrrrrrrrrrrrrrPIIrrmmmmmmrrmbwwwwwwwqmmrrIIIIIIIrrrrrrrrrrrrrrrrIII\nIIIIIIIIrrrIIIIIIIIIIIrrIrrrIIIIIIIIrrrrmmmmmmmmrrrrrIIIrrrrrrrrrrrbwwwwwwwrrrrrIIIIIIIrrrrrrrrrrrrrrrrIII\nIIIIIIIIrrrIIIIIIIIIIIrrIrrrIIIIIIIIrrmmmrrrrpppppppppppppppppprrrrbwwwwwwwrrrrIIIIIIIIrrrrrrrrrrrrrrrIIII\nIIIIIIIIIrrIIIIIIIIIIIrrIrrrIIIIIIIrrrrrrrrrrppppppppppppppppppmmrrbwwwwwwwrmrrIIIIIIIrrrrrrIIIIIrrmrrIIII\nrrrrrrrrIrrIIIIIIIrrrrrrIrrrIIIIIIIrrrrrrrrmmppppppppppppppppppmmrrbwwwwwwwrrrrIIIIIIIrrrrrIIIIIIrrmrrIIII\nrrrrrrrrIrrrrrrrrrrrrrrrIrrrIIIIIIrrrrrrrrrmmpppppppppppppppppprrrrbwwwwwwwrrrrIIIIIIIrrrrIIIIIIIrrrrrrrrr\nrrrrmmrrIrrrrrrrrrrIIIIIIrrrIIIIIIrrrrrrrrrmmppppppppppppppppppIIIIbwwwwwwwrrrrIIIIIIIrrrrIIIIIIIrrrrrrrrr\nrrrrrmrrrrrIIIIrrIIIIIIIIrrrIIIIIIrrmmmrrrrmmppppppppppppppppppIIIIbwwwwwwwrrrrIIIIIIIrrrrIIIIIIIrrIIIIIII\nrrrrrmrrrrrIIIIrrIIIIIIIIrrrIIIIIIrrmmmrrrrmmpppppppppppppppppprrrrbwwwwwwwrrrrIIIIIIIrrrrIIIIIIIrrIIIIIII\nmmrrrmrrIIIIIIIrrIIIIIIIIrrrIrrrrrrrmmmrrrrmmppppppppppppppppppmmrrbwwwwwwwqrrIIIIIIIIrrrrIIIIIIIrrIIIIIII\nmmrrrmrrIIIIIIIrrIIIIIIIIrrrrrrrrrrrmmmrrrrmmIIIIrrmmrrrrrrrrrmmmrrbwwwwwwwqrrIIIIIIIIrrrrIIIIIIIrrIIIIIII\nmmrrrmrrIIIIIIIrrIIIIIIIIrrrrrIIrrIIPPPrrrrmmIIIIrrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIIIIIIIrrrrIIIIIIIrrIIIIIII\nmmrrrmrrIIIIIIIrrIIIIIIIIrrrrrIIrrIIIPPrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIrrrrIIIIIIIrrIIIIIII\nmmrrrmrrrrrrrrrrrIIIIIIIIrrrrrIIrrIIIIPrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIrrrrIIIIIIIrrIIIIIII\nmmrrrrrrrrrrrrrrrrrrrrrIIIrrrrIIrrIIIIPrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIIIIIrrrIIIIIII\nmmrrrrrrIIIIIIIrrrrrrrrrrrrrrrIIrrIIIIIPIrrrrrrrrrrrrrrrrrrrIrrrrmmqwwwwwwwwrrrrrrrrrrrrrrIIIIIIrrrIIIIIII\nmmrrrIIIIIIIIIIrrIIIIrrrrrrrrrIIrrIIIIIIIIIrrrrrrrrrmmmrrrrrIIrrrrrqwwwwwwwwrrrrrrrrrrrrrrIIIIIIIIIIIIIIII\nrrrrrIIIIIIIIIIrrIIIIIIIIIIrrrIIrrrrrrrrrrrrrrrrrrrrmmmrrrrrIIrrrrrqwwwwwwwwrrrrrrrrrrrrrrrrrrrrIIIIIIIIII\nrrrrrIIIIIIIIIIrrIIIIIIIIIIrrrIIrrrrrrrrrrrrrrrrrrrrrrrrrrrIIIIIIrrqwwwwwwwwqPPPPmmmrrrrrrrrrrrrrrrrrrrrII\nIIrrrIIIIIIIIIIrrIIIIIIIIIIrrrPIIIIIIIIrrrrrrrrrrrrrrrrrrrrIIIIIIrrqwwwwwwwwqPPPPPPmrrrrrrrrrrrrrrrrrrrrrI\nIIrrrIIIIIIIIIIrrIIIIIIIIIIrrrPPIIIIIrrrrrrrrIIrrrrrrrrrrrrrrrrrrrrrwwwwwwwwqPPPPPmmrrrIIIIIIIIrrrrrrrrrrI\nIIrrrIIIIIIIIIIrrIIIIIIIIIIrrrPPIIIIIrrrrrrrrIIIIrrrrrrrrrrrrrrrrrrbwwwwwwwwqPPmrrrrrrrIIIIIIIIIIIIIIIrrrI\nIIrrrrrrrrrrrrrrrrrIIIIIIIIrrrPPPIIrrrrrrrrrrIIIIIIIrrmrrrrrrrrrrrrbwwwwwwwwqmmrrrrrrrrIIIIIIIIIIIIIIIrrrI\nIIrrrrrrrrrrrrrrrrrrrrrrrrrrrrPPPIIrrrrrrrrrIIIIIIrrrrmrrrrrrrrrrrrbwwwwwwwwqmmrrmrrrrIIIIIIrrrIIIIIIrrrrI\nIIIrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrIrrIIIIIIIIrrrrmrrrrmmrrIIIIbwwwwwwwwqmmrrmrrrIIIIIIIrrrrrrrrrrrrrr\nIIIIIIIIIIIIIIIIrrrrrrrrrrrrrrrrrrrrrrrIrrrrrrrrrrrrrrrrrrrmmrrIIIIbwwwwwwwwrrrrrmrrrIIIIIIIrrrrrrrrrrrrrr\nIIIIIIIIIIIIIIIIrrIIIIIIIrrrrrrrrrrrrrrIrrrrrrrrrrrrrrrrrrrrrrrIIIIbwwwwwwwwwqmrrmrrrIIIIIIIrrrIIIIIIIrrrr\nrrrrIIIIIIIIIIIIrrIIIIIIIrrrrrrrrrPrrrrIIIIIIIIrmmrrrrrrrrrrrrrIIIIbwwwwwwwwwqmrrmrrrIIIIIIIrrrIIIIIIIIrrr\nrrrrrIIIIIIIIIIIrrIIIIIIIrrrrrrrrrrrrrrIIIIIIIIrmrrrrrrrrrIIIrrIIIIbwwwwwwwwwqmrrmrrrIIIIIIIrrrIIIIIIIIIII\nrrrrrIIIIIIIIIIIrrIIIIIIIIrrrrrrrrrrrrrrrrrrrrrrmrrmmmrrrrIIIrrIIIIbwwwwwwwwwqmmmrrrrIIIIIIIrrrIIIIIIIIIII\nmmrrrIIIIIIIIIIIrrIIIIIIIIIrrIIIrrrrrrrrrrrrrrrrrrrrrrrrrrIIIrrIIIIbwwwwwwwwwqmmmrrrIIIIIIIIrrrrrrrrrrIIII\nmmrrrIIIIIIIIIIIrrIIIIIIrrrrrIIIIrrrrrrrrrrrrrrrrrrrrrrrrrIIIrrIIIIbwwwwwwwwwwqmmrrrIIIIIIIIrrrrrrrrrrIIII\nmmrrrIIIIIIIIIIIrrIIIIIrrrrrrIIIIIIrrrmmmmmmmmrrrrrIIIIIIIIIIrrIIIqwwwwwwwwwwwqmrrrrIIIIIIrrrrIIIIIIrrIIII\nmmrrrIIIIIIIIIIIrrrrrrrrrIrrIIIIIIIrrrmmmmmmmmrrrrIIIIIIIIIIIrrIIIqwwwwwwwwwwwqmrrrIIIIIIrrrrrIIIIIIrrIIII\nmmrrrIIIIIIIIIIIrrrrrrrrrIrrIIIIIIrrrrmmmmmmmmrrrrIIIIIIIIIIIrrIIImbwwwwwwwwwwqrrrrIIIIIIrrIIIIIIIIIrrIIII\nmmrrrIIIIIIIIIIIrrIIIIIIIIrrIIIIrrrrrrrrrrrrrrrrrrrrrrrrrrrrIrrIIImbwwwwwwwwwwrrrrrIIIIIIrrIIIIIIIIIrrrrrr\nmmrrrIIIIIIIIIIIrrIIIIIIIIrrIIIrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIImbwwwwwwwwwwrrrrrIIIIIIrrIIIIIIIIIrrrrrr\nmmrrrIIIIIIIIIIIrrIIIIIIIIrrIIIrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIImbwwwwwwwwwwrrrrrIIIIIIrrIIIIIIIIIrrrmmm\nmmrrrrrrrrrrrrrrrrIIIIIIIIrrIIIrrrrrrmmmmmmmrIIIIIIIIIIIIIrrrrrIIImbwwwwwwwwwrbbbbrIIIIIIrrIIIIIIIIIrrrmmm\nrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIIrrrrrrrrrrrrrrrrrrrIIIIIIIIrrrmmPPPPbwwwwwwwwwwwwwwwrrrrrrrrrrrrrrrrrrrrmmm\nrrrrrrrIIIIIIIIIIrrrrrrrrrrrIIIrrrrrrrrrrrrrrrrrrrIIIIIIIIrrrrrrrrrbwwwwwwwwwwwwbbrwwwrrrrrrrrrrrrrrrrrmmm\nIIIIrrrIIIIIIIIIIrrIIIIIIIIIIIIrrrrrrIIIIIIIIIIIrrIIIIIIIIrrrrrrrrrbbbbbbbbbbbwwbbrwwwwwwqqqqqmmmmmmmqqqqq\nIIIIrrrIIIIIIIIIIrrIIIIIIIIIIIIrrrrrrIIIIIIIIIIIrrIIIIIIIIrrrrrrrrbbbbbbbbbbbbwwbbrwwwwwwwwwwwqqqqqqqwwwww\nIIIIrrrIIIIIIIIIIrrIIIIIIIIIIIIrrrrrrIIIIIIIIIIIrrIIIIIIIIrrrmmmmrbbbbbbbbbbbbwwwwwwwwwwwwwwwwwwwwwwwwwwww\nrrIIrrrIIIIIIIIIIrrrrrrrrrrrrrrrrrrrrIIIIIIIIIIIrrIIIIIIIIrrrmrrbbbbbbbbbbbbwwwrrrrwwwwwwwwwwwwwwwwwwwwwww\nrrIIrrrIIIIIIIIIIrrrrrrrrrrrrrrrrrrrrIIIIIIIIIIIrrIIIIIIIbbbbbbbbbbbbbbbbbbbwwwrrrrqqqwwwwwwwwwwwwwwwwwwww\nrrIIrrrIIIIIIIIIIrrrrrrrrrrrrrrrrrrrIIIIIIIIIIIIrrIIIIIIrbbbbbbbbbbbwwwwwwwwwwwqrrrmmmqqqwwwwwwwwwwwwwwwww\nIIIIrrrIIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIIIIIIIIrrIIIIIbbbbbbbbbbbbwwwwwwwwwwwwqrrrrrrrrrrrrrrwwwwwwwqqqqq\nIIIIrrrIIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIIIIbbbbbbbbbbbbbbbbbbbbbbbwwwwwwwwwwwwqrrrrrrrrrrrrrrrrrrrrrrrrrr\nIIIIrrrIIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIIIIbbbbbbbbbbbbbbbbbbbbbbbwwwwwwwwwwwwqrrrIIIIIIIIIIIIIIrrrrrrrrr\nIIIIrrrIIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIIbbbbbbbbbbbbbbbbbbIIIIIIqwwwwwwwwwwwwqrrrIIIIIIIIIIIIIIrrrIIIIII\nIIIIrrrIIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIIbbbbbbbbbbbbbbbbrIIIIIIIqwwwwwwwwwwwwqrrrIIIIIIIIIIIIIIrrrIIIIII\nIIIIrrrIIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIrbbbbbbbbbbbbbbbbrIIIIIIIqwwwwwwwwwwwwqrrrIIIIIIIIIIIIIIrrrIIIIII\nIIIIrrrrIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIrbbbbbmmmrrrrmmrrrIIIIIIIqwwwwwwwwwwwqmrrrIIIIIIIIIIIIIIrrrIIIIII\nIIIIIrrrIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIrbbbbbmmmrrrrmmrrrIIIIIIqwwwwwwwwwwwqmmrrrIIIIIIIIIIIIIIIrrIIIIII\nIIIIIrrrIIIIIIIIIrrrIIIIIIIIIIIrrrIIIIIIIrbbbbbmmmrrrrmmrrrIIIIIIqwwwwwwwwwwrrrrrrrIIIIIIIIIIIIIIIrrIIIIII",
+ "cells": "IIIIIIIIIIIIrrmmmrrmrrIIIIIIIIIIrrmmmmmbbrrrrrrrrbbrrmmmmmmmrrIIIIIIIrrIIIIIIrrrIIIIIrrmrrIIIIIIIIIIIIIIIr\nPIIIIIIIIIIIrrmmmmmmrrIIIIIIIIIIrrmmmrmbbrrrrrrrrbbrrmmmmmmmrrIIIIIIIrrIIIIIIrrrIIIIIrrmrrIIIIIIIIIIIIIIIr\nPPPIIIIIIIIrrrrrrrrrrrIIIIIIIIIIrrrrrrrbbrrrrrrrrbbrrrrrrrrrrrIIIIIIIrrIIIIIIrrrIIIIIrrmrrIIIIIIIIIIIIIIIr\nrrPIIIIIIIrrrrrrrrrrrrIIIIIIIIIIrrrrrrrbbrrrrrrrrrrrrrrrrrrrrrIIIIIIIrrIIIIIIrrrIIIIIrrmrrIIIIIIIIIIIIIIIr\nrrIIIIIIIIrrIIIIIIIIrrIIIIIIIIIIrrmbrIIIbbwbrrrrrrrrIIIIIIIrrrrrrrrrrrrIIIIIIrrrIIIIIrrrrrrrrrrrrrrrrrrrrr\nrrIIIIIIIIrrIIIIIIrrrrIIIIIIIIIIrrmmrImbbbwwwwwwwrrrIIIIIIIrrrrrrrrrrrrIIIIIIrrrIIIIIrrrrrrrrrrrrrrrrrrrrr\nrrIIIIIIIIrrIIIIIIrrrrrrrrrrrrrrrrrrrIrbbbwwwwwwwrrrIIIIIIIrrIIIIIIIIrrIIIIIIrrrIIIIIIIIrrrrrrrrrrrrrrrrrr\nrrrrrrrrrrrrIIIIIIIIrrrrrrrrrrrrrrrrrIIIbbbwwwwwwrrrIIIIIIIrrIIIIIIIIrrIIIIIIrrrIIIIIIIIrrrIIIIIIIrrrrIIII\nrrrrrrrrrrrrIIIIIIIIrrIIIIIIIIIIIIrrrIbIbbbwwwwwwrrrIIIIIIIrrIIIIIIIIrrIIIIIIrrrIIIIIIIIrrrIIIIIIIrrrrIIII\nIIIIIIIrrrrrrIIIIIIIrrIIIIIIIIIrrIbrrIIIbbbwwwwwwrrrIIIIIIIrrIIIIIIIIrrIIIIIIrrrIIIIIIIIrrrIIIIIIIrrrrIIII\nIIIIIIIrrrrIrIIIIIIIrrIIIIIIIIbrrrrrIIIIbbbwwwwwwrrrIIIIIIIrrIIIIIIIIrrIIIIIIrrrrIIIIIIIrrrIIIIIIIrrrrIIII\nIIIIIIIrrrrIrPPIIIIIrrIIIIIIIIIIIrbrIIIIbbbwwwwwwrrrIIIIIIIrrIIIIIIIIrrIIIIIIrrrrrrIIIIIrrrIIIIIIIrrrrIIII\nIIIIIIIrrrrIrPPIIIIIrrIIIIIIIIIIIrbrIIIIbbbwwwwwwrrrIIIIIIIrrIIIIIIIIrrrrrrrrrrrrrrIIIIIrrrIIIIIIIrrrrIIII\nIIIIIIIrrrrIrPPIIIIIrrIIIIIIIIIIIIbrIIrIbbbwwwwwwwrrIIIIIIIIIIIIIIIIIrrrrrrrrrrrrrrrrrrrrrrrrrIIIIrrrrIIII\nIIIIIIIrrrrIrIIIIIIIrrIIIIIIIIIIIrbrIIIIbbbwwwwwwwqrrrrrrrrIIIIIIIIrrIIIIIIIIrrrrrrrrrrrrrrrrrIIIIrrrrrrrr\nIIIIIIIrrrrIrIIIIIIIrrrrrrrrrrrrrrrrIIIIbbbwwwwwwwqrrrrrrrrrIIIIIIIIIIIIIIIIIrrrrrrrrrrrrrIIrrrrrrrrrrrrrr\nrIIIIIIrrrrIrrrrrrrrrrrrrrrrrrrrrrrrrrrbbbbwwwwwwwqIIIIIIIrrIIIIIIIIIIIIIIIIIrrrrrIIIIIIIIIIrrrrrrrrIIIIII\nrIIIIIrrrrrIIIIIIIIIrrmmmmrrmmmmrbbrIIIIIbbwwwwwwwqIIIIIIIrrIIIIIIIIIIIIIIrrrrrrrIIIIIIIIIIIrrrIIIIIIIIIII\nrrrrrrrrrrrrrrrrrrrrrrmmmmrrmmmmmbbrrIIIIbbwwwwwwwqIIIIIIIrrIIIIIIIIIIIIIrrrrrrrIIIIIIIIIIIIrrrIIIIIIIIIII\nrrrrrrrrrrrrrrrrrrrrrrpppppppppppppppppppbbwwwwwwwrrrIIIIIrrIIIIIIIIIIIIIrrrrrrrIIIIIIIIIIIIrrrIIIIIIIIIII\nIIIIIIIIrrIIIIIIIIrrrrpppppppppppppppppppbbwwwwwwwrrrrrrIIrrIIIIIIIIIIIIIrrrrrrrIIIIIIIIIIIIrrrIIIIIIIIIII\nIIIIIIIIrrIIIIIIIIrrrrpppppppppppppppppppbbwwwwwwwqrrmmrIIrrIIIIIIIIIIIIIrrrrrrIIIIIIIIIIIIIrrrIIIIIIIIIII\nIIIIIIIIrrIIIIIIIIrrrrpppppppppppppppppppbbwwwwwwwqrrmmrIIrrIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIrrrrrrrrrrrrrr\nIIIIIIIIrrIIIIIIIIrrrrpppppppppppppppppppbbwwwwwwwqrrmmrIIrrIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIrrrrrrrrrrrrrr\nIIIIIIIIrrIIIIIIIIrrrrpppppppppppppppppppbbwwwwwwwqrrrrrIIrrIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nIIIIIIIIrrIIIIIIIIrrrrpppppppppppppppppppbbwwwwwwwqrrrrrrrrrIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nIIIIIIIIrrIIIIIIrrrrrrpppppppppppppppppppbbwwwwwwwqrrIrrrrrrIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nIIIIIrrrrrIIIIIrrrrrrrmmmmrrIIIIIIbrrIIIIbbwwwwwwwqrrIIIIrrIIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrIIIrrrrrrIIIIIrrrrrrrrrrrrrrrrrIIbrrIIIIbbwwwwwwwqrrIIIIrrIIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrIIIrrIIIIIIIrrrrrrrrrrrrrrrrrrrIIbrrIIIIbbwwwwwwwqrrIIIIrrIIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrIIIrrIIIIIIIrrrrrrrrrrmrrrrIIrrIIIrrIbIIbbwwwwwwwqrrIIIIrrIIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrIIIrrIIIIIIIrrrrIIrrrrmrrIIIIrrIIIrrIbIIbbwwwwwwwwrrIIIIrrIIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrIIIrrIIIIIIIrrrrIIrrrrmrrIIIIrrIrIrrmbIIbbrrrrrrrrrrIIIIrrIIIIIIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrIIIrrIIIIIrrrrrrIIrrrrmrrIIIIrrrrrrrrrrbbbrrrrrrrrrrrrrrrrrrrrrIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrIIIrrIIIIIrrrrrrIIrrrrmrrIIIIrrrrrrrrrrbbbrrrrrrrrrrrrrrrrrrrrrIIIIIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrrrrrrrrrrrrrrrrrIIrrrrrrrrrrrrrmrrmmmmmrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrrrrrrrrrrrrrrrrrIIrrrrrrrrrrrrrmrrrrrrrrrrwrrrrrrrrrrrrrrrrrrrrrrrrIIIIIrrrrIIIIIIIIIIIIIIIIrrIIIIIIIIIII\nrrrrrrrrrrrrrrrrrIIrrrrrrrIIIrrrmrrrrrrrrrrwwwwwwwwrrIIIIIIIIrrrrIIIIIIIIrrrrIIIIIIIIIIIIIrrrrrIIIIIIIIIII\nrrrrrrrrrrrrrrrrIIIrrrrrrIIIIrrrmrrIIIIIIrrwwwwwwwwrrIIIIIIIIrrrrrrrrrrrrrrrrIIIIIIIIIIIIIrrrrrIIIIIIIIIII\nmrrrrIIrrrrrIIIIIIIrrrrrrIIIIIrrmrrIIIIIIrrwwwwwwwwrrIIIIIIIIrrrrrrrrrrrrrrrrrrrrrrrrrrrrIIIIIIIIIIIIIIIII\nrrrrrIIIrrrrIIIIIIIrrrrrrIIIIIrrrrrrrrIIIrrwwwwwwwwrrIIIIIIIIrrrrrrrrrrrrrrrrmmmmmmmmmmmrIIIIIIIIIIIIIIIII\nrrrrrIIIrrrrIIIIIIIrrrrrrIIIIIrrrrrrrrIIIrrwwwwwwwwrrrrrrrrrrrPrrrrrrrrrrrrrrmmmmmmmmmmmrIIIIIIIIIIIIIIIII\nrrrrrIIIrrrrIIIIIIIrrrrrrIIIIIIIIIIIrrIIIrrwwwwwwwwrrrrrrrrrrrPPPIIIIIIIrrrrrrrrrrrrrrrrrIIIIIIIIIIIIIIIII\nrrrrIIIIrrrrIIIIIIIrrrrIIIIIIIIIIIIIIrrIIrrwwwwwwwwrrIIIIIPPPPPPIIIIIIrrrrrrrrrrrrrrrrrrrrIIIIIIIIIIIIIIII\nIIIIIIIIrrrrIrrIIIIrrrrIIIIIIIIIIIIIIrrIIrrwwwwwwwwrrIIIPPPPPPPPIIIIIrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrII\nIIIIIIIIrrrrrrrrrrrrrrrIIIIIIIIIIIIIIrrIIrrwwwwwwwwwrIIPPPPPPPPPPIIIIrrrrrIIIIIIIIIIIIIrrrrrrrrrrrrrrrrrrr\nrrrrrrrrrrrrrrrrrrrrrrrIIIIIIIIIIIIIIrrIIrrwwwwwwwwwrIIPPPPPPPPPPPIIIrrrIIIIIIIIIIIIIIIIrrrrrrrrrrrrrrrrrr\nIIIIIIIIrrrrrrrrrrrrrrrIIIIIIIIIIIIIIrrbbrrwwwwwwwwwrIIIPPPPPPPPPIIIIrrrIIIIIIIIIIIIIIIIrmmmmmmmmmmmmmrrrr\nIIIIIIIIIIrrrrrrrrrrrrrrIIIIIIIIIIIIrrrrrrrwwwwwwwwwrIIIPPPIIPPPPIIIIrrrIIIIIIIIIIIIIIIIrmmmmmmmmmmmmmrrrm\nIIIIIIIIIIIIIrrIIIIrrrrrrrrrrrrrrrrrrrrbbbbwwwwwwwwwrIIIPPPIIIIIIIIrrrrrIIIIIIIIIIIIIIIIrmmmmmmmmmmmmmrrrm\nrrrrrrrrrrIIIrrIIIIrrrrrrrrrrrrrrrrrrrrbbbbwwwwwwwwwrIIIPPPIIIIIIIrrrrrrIIIIIIIIIIIIIIIIrrrrrrrrrrrrrrrrrm\nrrrrrrrrrrIIIrrIIIIrrrrrrrrrrrrrrrrrrrrbbIbwwwwwwwwwrIIIIIIIIIIIIIrrrrrIIIIIIIIIIIIIIrrIIIIIIIIIIIIIIIrrrm\nIIIIIIIIrrIIIrrIIIIrrrrrrrrrrrrrrrrrIIIIIIbwwwwwwwwwrIIIIIIIIrrrrrrrrrrIIIIIIIIIIIIIrrrIIIIIIIIIIIIIrrrrrm\nIIIIIIIIrrIIIrrIIrrrrrrrIIIIIrrIIbbbIPPPbbbwwwwwwwwwrIIIIIIIrrrrrrrrrrrIIIIIIIIIIIIIrrrIIIIIIIIIIIIrrrrrrr\nIIIIIIIIrrrrrrrIIrrrrrrrIIIIIrrPPIbbbPPPbbbwwwwwwwwwrIIIIIIIrrIIIIrrrIIIIIIIIIIIIIIIrrrIIIIIIIIIIIIrrIrrrr\nIIIIIIIIrrrrrrrIIIIrrrrrIIIIIrrPPPbbbPPbbbbwwwwwwwwwrrrrrrrrrrIIIIrrrIIIIIIIIIIIIIIIrrrIIIIIIIIIIIIrrIIrrr\nIIIIIIIIrrrrrrrrrrrrrrrrIIIIIrrPPPbbbPPbbbbwwwwwwwwwrIIIIIIIrrIIIIrrrIIIIIIIIIIIIIIIrrrrrrrrrrrrrrrrrrIIII\nIIIIIIIIrrrrrrrrrrrrrrrrIIIIIrrPPPbbbPPbbbbwwwwwwwwwrIIIIIIIrrIIIIrrrIIIIIIIIIIIIIIIrrrrrrrrrrrrrrrrrrIIII\nIIIIIIIIrrrrrrrrrrrrrrrrrrrrrrrPPbbbPPPbbbbwwwwwwwwwwqIIIIIIrrIIIIrrrIIIIIIIIIIIIIIIrrrIIIIIIIIIIIIIrrIIII\nIIIIIIIIrrrrrrrrrrrrrrrrrrrrrrrPPPPPPPPbbbbwwwwwwwwwwqIIIIIIrrIIIrrrrIIIIIIIIIIrrrrrrrrIIIIIIIIIIIIIrrIIII\nIIIIIIIIIrrrrrrrrrrrIIIImIrmmrrPPPPPPPPPPPbwwwwwwwwwwqIIIIIIrrIIIrrrIIIIIIIIIIrrrrrrrrrIIIIIIIIIIIIIrrrrrr\nIIIIIIIIrrrrrrrrrrrIIIIIIIrmrrPPPPPPPPPPPPbwwwwwwwwwwwqIIIIIrrIIIrrrIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIrrrrrr\nIIIIIIIIrrrrIIIIIrrIIIIIIIIIrrPPPPPPPPPPPPbwwwwwwwwwwwqIIIIIIIIIIrrrIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII\nIIIIIIIIrrrrIIIIrrrIIIIIIIIrrrPPPPPPPPPPPPbwwwwwwwwwwwrrrrrIIIIIIrrrIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII\nIIIrrrrrrrrrIIIIrrrrIIIIIIrrrrPPPPPPPPPPPPbwwwwwwwwwwwrrrrrIIIIIrrrrIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII\nIIIrIIIIrrrrIIIIIrrrIIIIIIrmrrPPPPPPPPPPPPbwwwwwwwwwwwqmmrrIIIIIrrrIIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII\nIIIrIIIIrrrrIIIIIrrrIIIIIIrmrrPPPPPPPPPPPPbwwwwwwwwwwwqmmrrIIIIIrrrIIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII\nIIIrIIIIrrrrIIIIIIIIIIIIIIrmrrPPPPPPPPPPPPwwwwwwwwwwwwwqmrrIIIIrrrrIIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII\nIIIrIIIIrrrrIIIIIIIIIIIIIIrmrrPPPPPPPPPPPbwwwwwwwwwwwwwqmrrIIIrrrrrIIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII\nIIIrIIIIIIrrIIIIIIIIIIIIIIrmrrPPPPPPPPPPPwwwwwwwwwwwwwwqmrrIIIrrrrIIIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII\nIIIrIIIIIIrrIIIIIIIIIIIIIIrmrrPPPPPPPPPPPbwwwwwwwwwwwwwqmrrIIIrrrIIIIIIIIIIIIIrrIIIIIrrIIIIIIIIIIIIIIIIIII",
  "legend": {
   "r": "rue",
   "b": "boulevard",
@@ -17,140 +17,134 @@
  "monuments": [
   {
    "id": "saint-benoit",
-   "x": 63,
-   "y": 39,
-   "w": 4,
-   "h": 8,
-   "levels": 3
+   "x": 28,
+   "y": 42,
+   "w": 9,
+   "h": 7,
+   "levels": 3,
+   "cells": 62
   },
   {
    "id": "eveche",
-   "x": 63,
-   "y": 47,
-   "w": 3,
-   "h": 7,
-   "levels": 3
-  },
-  {
-   "id": "theatre",
-   "x": 45,
-   "y": 25,
-   "w": 4,
-   "h": 2,
-   "levels": 3
+   "x": 31,
+   "y": 51,
+   "w": 11,
+   "h": 13,
+   "levels": 3,
+   "cells": 82
   },
   {
    "id": "jardin-eveche",
-   "x": 63,
-   "y": 54,
-   "w": 4,
-   "h": 1,
-   "levels": 0
+   "x": 30,
+   "y": 53,
+   "w": 12,
+   "h": 18,
+   "levels": 0,
+   "cells": 164
+  },
+  {
+   "id": "theatre",
+   "x": 19,
+   "y": 60,
+   "w": 9,
+   "h": 6,
+   "levels": 3,
+   "cells": 36
+  },
+  {
+   "id": "saint-jacques",
+   "x": 59,
+   "y": 12,
+   "w": 10,
+   "h": 6,
+   "levels": 3,
+   "cells": 39
   },
   {
    "id": "pont-vieux",
-   "x": 66,
-   "y": 7,
-   "w": 9,
+   "x": 41,
+   "y": 0,
+   "w": 8,
    "h": 4,
    "levels": 0
   },
   {
    "id": "pont-neuf",
-   "x": 67,
-   "y": 26,
+   "x": 43,
+   "y": 32,
    "w": 9,
    "h": 4,
    "levels": 0
   },
   {
    "id": "maisons-agout",
-   "x": 63,
-   "y": 21,
-   "w": 4,
-   "h": 2,
-   "levels": 3
+   "x": 36,
+   "y": 4,
+   "w": 5,
+   "h": 29,
+   "levels": 3,
+   "cells": 65
   }
  ],
  "labels": [
   {
-   "text": "Rue Frédéric Thomas",
-   "x": 50,
-   "y": 19
+   "text": "Rue Villegoudou",
+   "x": 43,
+   "y": 34
   },
   {
    "text": "Rue Victor Hugo",
-   "x": 56,
-   "y": 25
+   "x": 20,
+   "y": 29
   },
   {
-   "text": "Rue Villegoudou",
-   "x": 74,
-   "y": 28
-  },
-  {
-   "text": "Pont Neuf",
-   "x": 72,
-   "y": 28
+   "text": "Rue Frédéric Thomas",
+   "x": 8,
+   "y": 19
   },
   {
    "text": "Rue de l'Hôtel de Ville",
-   "x": 69,
-   "y": 37
+   "x": 41,
+   "y": 50
   },
   {
    "text": "Pont Vieux",
-   "x": 73,
-   "y": 10
-  },
-  {
-   "text": "Rue Sabatier",
-   "x": 57,
-   "y": 30
-  },
-  {
-   "text": "Boulevard Henri Sizaire",
-   "x": 57,
-   "y": 62
-  },
-  {
-   "text": "Quai des Jacobins",
-   "x": 69,
-   "y": 27
-  },
-  {
-   "text": "Quai Tourcaudière",
-   "x": 70,
-   "y": 10
-  },
-  {
-   "text": "Quai du Moulin",
-   "x": 69,
-   "y": 56
-  },
-  {
-   "text": "Boulevard Léon Bourgeois",
-   "x": 2,
+   "x": 47,
    "y": 3
   },
   {
-   "text": "Quai Miredames",
-   "x": 72,
-   "y": 6
+   "text": "Pont Neuf",
+   "x": 48,
+   "y": 35
   },
   {
-   "text": "Quai du Carras",
-   "x": 64,
-   "y": 1
+   "text": "Rue Sabatier",
+   "x": 21,
+   "y": 39
+  },
+  {
+   "text": "Quai des Jacobins",
+   "x": 42,
+   "y": 34
+  },
+  {
+   "text": "Quai Tourcaudière",
+   "x": 42,
+   "y": 3
+  },
+  {
+   "text": "Quai du Moulin",
+   "x": 42,
+   "y": 67
   },
   {
    "text": "Place Jean-Jaurès",
-   "x": 50,
-   "y": 21
+   "x": 27,
+   "y": 23
   },
   {
    "text": "Agout",
-   "x": 65,
+   "x": 53,
    "y": 3
   }
  ],
@@ -162,23 +156,105 @@
   "name": "fond_castres_grille.png"
  },
  "meta": {
-  "factor": 0.0966,
+  "factor": 0.17,
   "angle": -5.5,
   "center": {
-   "lat": 43.604299999999995,
-   "lon": 2.23925
+   "lat": 43.60469219904905,
+   "lon": 2.2432030498852313
   },
   "bbox": {
-   "south": 43.601,
-   "west": 2.2334731978255324,
-   "north": 43.6076,
-   "east": 2.2470807762809453
+   "south": 43.60281631394833,
+   "west": 2.239335435691088,
+   "north": 43.606568084149764,
+   "east": 2.2470706640793745
   },
-  "streets": 324,
-  "bends": 332,
-  "connectors": 3,
-  "open_share": 49.9,
-  "open_share_land": 54.5,
+  "streets": 157,
+  "bends": 196,
+  "connectors": 0,
+  "core": {
+   "du": 313.0,
+   "dv": 74.0,
+   "angle": -5.5,
+   "factor": 0.17,
+   "width_m": 623.5,
+   "height_m": 417.6,
+   "corners": [
+    [
+     43.606828,
+     2.239602
+    ],
+    [
+     43.606291,
+     2.247301
+    ],
+    [
+     43.602557,
+     2.246805
+    ],
+    [
+     43.603093,
+     2.239105
+    ]
+   ]
+  },
+  "monument_report": [
+   [
+    "saint-benoit",
+    48,
+    62,
+    62,
+    "9 × 7",
+    0,
+    6
+   ],
+   [
+    "eveche",
+    63,
+    82,
+    82,
+    "11 × 13",
+    0,
+    24
+   ],
+   [
+    "jardin-eveche",
+    126,
+    164,
+    164,
+    "12 × 18",
+    1,
+    26
+   ],
+   [
+    "theatre",
+    28,
+    36,
+    36,
+    "9 × 6",
+    1,
+    1
+   ],
+   [
+    "saint-jacques",
+    30,
+    39,
+    39,
+    "10 × 6",
+    1,
+    2
+   ],
+   [
+    "maisons-agout",
+    65,
+    65,
+    65,
+    "5 × 29",
+    0,
+    30
+   ]
+  ],
+  "open_share": 42.0,
+  "open_share_land": 45.1,
   "source": "castres.osm"
  }
 }
