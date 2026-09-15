@@ -722,12 +722,28 @@ setTool('pencil');
 setLayout(newLayout(), 'layout.json');
 updateUndoButtons();
 
+function setBackgroundSrc(src, name) {
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => { bgImg = im; bg.name = name || 'fond'; $('bBgOff').disabled = false; requestRender(); res(true); };
+    im.onerror = () => res(false);
+    im.src = src;
+  });
+}
+
 // API minimale pour les tests automatisés (tools/layout-editor/test_editor.py)
 window.editor = {
   load: (obj, name) => setLayout(obj, name), toJSON, cellToScreen, toCell,
   get grid() { return grid.join(''); }, get layout() { return lay; }, setTool, setType, fit,
   stats: () => ({ share: $('share').textContent, narrow: narrowCells.length }),
+  setBackground: setBackgroundSrc, get hasBackground() { return !!bgImg; },
 };
+
+// Version autonome : le plan et le fond sont embarqués dans la page (pipeline/03_editeur_autonome.py)
+if (window.EMBED) {
+  if (window.EMBED.layout) setLayout(window.EMBED.layout, window.EMBED.name || 'layout.json');
+  if (window.EMBED.bg) setBackgroundSrc(window.EMBED.bg, window.EMBED.bgName || 'fond');
+}
 })();
 </script>
 </body>
