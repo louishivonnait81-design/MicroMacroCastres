@@ -19,7 +19,7 @@ Un fichier `tools/layout-editor/index.html` (sans serveur, sans dépendance rés
 `cells` : une lettre par case, `rows` lignes de `cols` caractères, séparées par `\n`.
 
 ## Partie A — `pipeline/00_osm_to_layout.py`
-1. Projeter les rues OSM (highway hors autoroutes) en mètres, choisir un facteur mètres → cases tel que le périmètre de `DECISIONS.md` tienne dans la grille (afficher le facteur).
+1. Projeter les rues OSM (highway hors autoroutes) en mètres, choisir un facteur de compression mètres → cases tel que le périmètre de `DECISIONS.md` tienne dans la grille (afficher le facteur ; attendu 0,6–0,75). Le tracé et les positions relatives sont conservés ; seules les longueurs sont compressées.
 2. Redresser chaque rue sur les axes 0°/90° de la grille (polyligne simplifiée, chaque segment accroché à l'axe le plus proche), largeur minimale 4 cases, boulevards 6.
 3. Tout ce qui est entouré de rues devient `I` ; les grands îlots (> 12 cases de côté) sont coupés en deux par une rue de 3 cases.
 4. Poser `p` (place Jean-Jaurès), `P` (jardin), `w` (Agout, largeur 8–12 cases), `q` (quais, 2 cases le long de l'eau) d'après les polygones OSM, redressés.

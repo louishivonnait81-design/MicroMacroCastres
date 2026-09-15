@@ -21,7 +21,7 @@ Commence par tasks/001_environnement.md. Confirme d'abord en trois lignes ce que
 ## Message 2 : après la fiche 001 validée
 
 ```
-Fiche 001 validée. Passe à tasks/002. Les fichiers data/castres.osm et data/fond_castres.png sont dans le repo. Le facteur mètres → cases doit faire tenir le périmètre de DECISIONS.md dans 106 × 71 cases ; si ça ne tient pas, propose-moi deux périmètres réduits avec leur PNG de contrôle et arrête-toi.
+Fiche 001 validée. Passe à tasks/002. Les fichiers data/castres.osm et data/fond_castres.png sont dans le repo. Le facteur de compression (mètres → cases) doit faire tenir le périmètre de DECISIONS.md dans 106 × 71 cases avec des rues de 3 cases minimum ; affiche le facteur obtenu. S'il descend sous 0,55, propose-moi deux périmètres légèrement réduits avec leur PNG de contrôle et arrête-toi.
 ```
 
 ## Message 3 : à chaque nouvelle fiche
