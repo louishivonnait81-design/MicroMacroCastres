@@ -24,10 +24,10 @@ def main():
             for i in range(max(0, x), min(COLS, x + w)):
                 g[j][i] = ch
 
-    # rues horizontales (4 cases) et un boulevard (6) en bas
+    # rues horizontales (4 cases) et un boulevard (6, lettre b) en bas
     for y in (0, 14, 28, 44, 58):
         rect("r", 0, y, COLS, 4)
-    rect("r", 0, 65, COLS, 6)
+    rect("b", 0, 65, COLS, 6)
     # rues verticales
     for x in (0, 16, 34, 52, 100):
         rect("r", x, 0, 4, ROWS)
@@ -52,7 +52,7 @@ def main():
     layout = {
         "cols": COLS, "rows": ROWS, "cell_cm": 1.0,
         "cells": cells,
-        "legend": {"r": "rue", "I": "ilot", "p": "place", "P": "parc",
+        "legend": {"r": "rue", "b": "boulevard", "I": "ilot", "p": "place", "P": "parc",
                    "w": "eau", "q": "quai", ".": "vide"},
         "monuments": [
             {"id": "saint-benoit", "x": 56, "y": 32, "w": 10, "h": 14, "levels": 3},

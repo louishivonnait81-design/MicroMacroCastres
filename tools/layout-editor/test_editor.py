@@ -98,7 +98,7 @@ def main():
 
         print("pinceau : 20 cases en eau")
         page.keyboard.press("w")                      # type eau
-        page.keyboard.press("b")                      # pinceau
+        page.keyboard.press("c")                      # crayon
         drag(page, 5, 20, 24, 20, steps=40)           # 20 cases sur la ligne 20 (îlot)
         g = page.evaluate("window.editor.grid")
         painted = [i for i in range(len(g)) if g[i] != orig[i]]
@@ -119,7 +119,7 @@ def main():
         page.keyboard.press("Meta+z")
         g = page.evaluate("window.editor.grid")
         check(g.count("p") == 240, "annuler restaure la place")
-        page.keyboard.press("w"); page.keyboard.press("b")
+        page.keyboard.press("w"); page.keyboard.press("c")
         click_cell(page, 40, 34)
         click_cell(page, 50, 34, modifiers=["Shift"])   # ligne droite
         g = page.evaluate("window.editor.grid")
@@ -144,7 +144,7 @@ def main():
         check(page.input_value("#mId") == "eveche", "clic sur un monument existant le sélectionne")
         page.click("#mCancel")
         if a.shots:
-            page.keyboard.press("b")
+            page.keyboard.press("c")
             page.screenshot(path=os.path.join(a.shots, "02_modifie.png"))
 
         print("export")

@@ -22,16 +22,17 @@ Un jeu de type MicroMacro : une grande carte isométrique noir et blanc du vieux
 | Voiture | 2 × 1 |
 | Arbre (boule) | 1,5–2 de diamètre |
 | Niveau d'immeuble | 1 de haut |
-| Rue | 3 minimum, 5 pour les boulevards |
+| Voie | venelle 1, ruelle 2, rue 3, rue nommée 4, boulevard / quai 6–8 |
 | Place Jean-Jaurès | 18–24 |
 
 ## Compression — ce qui se compresse
 
 Le périmètre est **étendu** et ne tient pas à l'échelle réelle. Règle : on garde le tracé réel (position relative des rues, des îlots, des monuments, de la rivière) et on compresse les **longueurs** d'un facteur unique. Facteur retenu (fiche 002) : **0,097 case par mètre, soit 1 case ≈ 10 m**. Le périmètre de 927 × 735 m tient ainsi dans 106 × 71 cases ; la marge de 16 cases en largeur va à l'est, sur Villegoudou.
 
-- Un îlot réel devient un à deux immeubles de 4–8 cases.
-- Seuls les boulevards, les rues principales et les cinq rues nommées sont conservés ; les venelles et impasses sont omises.
-- Les rues conservées font 4 cases (6 pour les boulevards). Les rues ne descendent jamais sous 3 cases.
+- Le réseau piéton et routier réel est gardé en entier, avec ses connexions : rues, ruelles, venelles, passages, escaliers, allées. Aucune voie supprimée. Un Castrais doit pouvoir suivre n'importe quel trajet de la vraie ville sur la carte.
+- Largeur selon le caractère : venelle 1 case, ruelle 2, rue 3, rues nommées 4, boulevards et quais 6–8 avec arbres. Pas d'escalier de cases : au plus un coude à angle droit toutes les 8 cases.
+- Les bâtiments n'ont aucune fidélité à respecter, sauf les monuments à leur position. Tout ce qui n'est pas voie, place, parc ou eau est îlot, plein, un à deux immeubles par îlot.
+- La part de vide n'est qu'une information, pas un objectif.
 - Le personnage reste 1 case : c'est l'échelle réelle de MicroMacro, où les personnages sont dix fois trop grands par rapport aux bâtiments.
 
 - Hauteurs : **3 niveaux partout**, monuments compris sauf clocher et théâtre. Pas d'exception.

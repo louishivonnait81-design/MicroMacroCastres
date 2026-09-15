@@ -17,10 +17,10 @@ import argparse
 import json
 import sys
 
-DEFAULT_LEGEND = {"r": "rue", "I": "ilot", "p": "place", "P": "parc",
+DEFAULT_LEGEND = {"r": "rue", "b": "boulevard", "I": "ilot", "p": "place", "P": "parc",
                   "w": "eau", "q": "quai", ".": "vide"}
-OPEN_TYPES = "rpP"        # rues + places + parcs : la part de « vide »
-STREET = "r"
+OPEN_TYPES = "rbpP"       # voies + places + parcs : la part de « vide »
+STREET = "rb"
 MIN_STREET = 3
 
 
@@ -81,9 +81,9 @@ def narrow_streets(lines, cols, rows):
     for y in range(rows):
         x = 0
         while x < cols:
-            if lines[y][x] == STREET:
+            if lines[y][x] in STREET:
                 x0 = x
-                while x < cols and lines[y][x] == STREET:
+                while x < cols and lines[y][x] in STREET:
                     x += 1
                 for i in range(x0, x):
                     hrun[y][i] = x - x0
@@ -92,16 +92,16 @@ def narrow_streets(lines, cols, rows):
     for x in range(cols):
         y = 0
         while y < rows:
-            if lines[y][x] == STREET:
+            if lines[y][x] in STREET:
                 y0 = y
-                while y < rows and lines[y][x] == STREET:
+                while y < rows and lines[y][x] in STREET:
                     y += 1
                 for j in range(y0, y):
                     vrun[j][x] = y - y0
             else:
                 y += 1
     return [(x, y) for y in range(rows) for x in range(cols)
-            if lines[y][x] == STREET and min(hrun[y][x], vrun[y][x]) < MIN_STREET]
+            if lines[y][x] in STREET and min(hrun[y][x], vrun[y][x]) < MIN_STREET]
 
 
 def stats(lay, lines):
@@ -146,7 +146,7 @@ def main():
             print(f"  {k:12s} {v:6d}  {100*v/st['total']:5.1f} %")
         ok = "OK" if st["open_share"] >= st["open_target"] else "sous l'objectif"
         print(f"  rues + places + parcs : {st['open_share']} % de la grille, {st['open_share_land']} % hors eau (objectif ≥ 33 %) → {ok}")
-        print(f"  cases de rue < 3 de large : {st['narrow_street_cells']}")
+        print(f"  cases de voie < 3 de large : {st['narrow_street_cells']} (venelles et ruelles comprises)")
         print(f"  monuments : {st['monuments']}, labels : {st['labels']}")
 
 

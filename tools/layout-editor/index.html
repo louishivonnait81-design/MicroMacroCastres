@@ -91,7 +91,7 @@
   <section>
     <h2>Outils</h2>
     <div id="tools">
-      <button data-tool="pencil" title="Pinceau (B). Maj+clic : ligne droite depuis le dernier point">Pinceau <kbd>B</kbd></button>
+      <button data-tool="pencil" title="Crayon (C). Maj+clic : ligne droite depuis le dernier point">Crayon <kbd>C</kbd></button>
       <button data-tool="rect" title="Rectangle (E)">Rectangle <kbd>E</kbd></button>
       <button data-tool="bucket" title="Seau (G)">Seau <kbd>G</kbd></button>
       <button data-tool="monument" title="Monument (M) : tracer un rectangle, ou cliquer un monument existant">Monument <kbd>M</kbd></button>
@@ -113,10 +113,10 @@
 
   <section>
     <h2>Statistiques</h2>
-    <div class="row"><span>Rues + places + parcs</span></div>
-    <div><span class="big" id="share">–</span> <span class="help">objectif ≥ 33 %</span></div>
+    <div class="row"><span>Voies + places + parcs (information)</span></div>
+    <div><span class="big" id="share">–</span> <span class="help">de la grille</span></div>
     <div class="row"><span id="narrow">–</span></div>
-    <div class="row"><label><input type="checkbox" id="cbNarrow" checked> surligner les rues &lt; 3 cases</label></div>
+    <div class="row"><label><input type="checkbox" id="cbNarrow"> surligner les voies &lt; 3 cases</label></div>
   </section>
 
   <section>
@@ -141,8 +141,8 @@
   <section class="help">
     <h2>Aide</h2>
     <p>Molette ou deux doigts : déplacer. <kbd>⌘</kbd>+molette ou pincer : zoom. <kbd>+</kbd>/<kbd>−</kbd> : zoom, <kbd>0</kbd> : ajuster.</p>
-    <p>Pinceau : clic ou glisser. <kbd>Maj</kbd>+clic : ligne droite depuis le dernier point peint.</p>
-    <p>Type : appuyer sur sa lettre (<kbd>r</kbd> <kbd>I</kbd> <kbd>p</kbd> <kbd>P</kbd> <kbd>w</kbd> <kbd>q</kbd> <kbd>.</kbd>).</p>
+    <p>Crayon : clic ou glisser. <kbd>Maj</kbd>+clic : ligne droite depuis le dernier point peint.</p>
+    <p>Type : appuyer sur sa lettre (<kbd>r</kbd> <kbd>b</kbd> <kbd>I</kbd> <kbd>p</kbd> <kbd>P</kbd> <kbd>w</kbd> <kbd>q</kbd> <kbd>.</kbd>).</p>
     <p>Marges A–G / 1–4 comme sur le papier. Les monuments sont hachurés, les rues étroites en rouge.</p>
   </section>
 </aside>
@@ -158,10 +158,10 @@
 'use strict';
 
 // ---------------------------------------------------------------- données
-const DEFAULT_LEGEND = { r: 'rue', I: 'ilot', p: 'place', P: 'parc', w: 'eau', q: 'quai', '.': 'vide' };
-const COLORS = { r: '#e3e3e3', I: '#c9a27e', p: '#f3d66b', P: '#9fd39b', w: '#8ec1e6', q: '#dccdb0', '.': '#ffffff' };
+const DEFAULT_LEGEND = { r: 'rue', b: 'boulevard', I: 'ilot', p: 'place', P: 'parc', w: 'eau', q: 'quai', '.': 'vide' };
+const COLORS = { r: '#e3e3e3', b: '#cdd6c4', I: '#c9a27e', p: '#f3d66b', P: '#9fd39b', w: '#8ec1e6', q: '#dccdb0', '.': '#ffffff' };
 const EXTRA_COLORS = ['#e6a0c4', '#a0c4e6', '#c4e6a0', '#e6c4a0', '#a0e6c4', '#c4a0e6'];
-const OPEN_TYPES = ['r', 'p', 'P'];
+const OPEN_TYPES = ['r', 'b', 'p', 'P'];
 const MIN_STREET = 3;
 const MARGIN = 26;              // px : marge pour les repères A–G / 1–4
 const BANDS_X = 'ABCDEFG', BANDS_Y = '1234';
@@ -349,31 +349,31 @@ function updateStats() {
   const share = 100 * open / N;
   const sh = $('share');
   sh.textContent = share.toFixed(1) + ' %';
-  sh.className = 'big ' + (share >= 33 ? 'ok' : 'warn');
+  sh.className = 'big';
 
   // rues étroites : épaisseur = min(série horizontale, série verticale) < 3
   const hrun = new Uint16Array(N), vrun = new Uint16Array(N);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W;) {
-      if (grid[y * W + x] === 'r') {
-        const x0 = x; while (x < W && grid[y * W + x] === 'r') x++;
+      if ('rb'.includes(grid[y * W + x])) {
+        const x0 = x; while (x < W && 'rb'.includes(grid[y * W + x])) x++;
         for (let i = x0; i < x; i++) hrun[y * W + i] = x - x0;
       } else x++;
     }
   }
   for (let x = 0; x < W; x++) {
     for (let y = 0; y < H;) {
-      if (grid[y * W + x] === 'r') {
-        const y0 = y; while (y < H && grid[y * W + x] === 'r') y++;
+      if ('rb'.includes(grid[y * W + x])) {
+        const y0 = y; while (y < H && 'rb'.includes(grid[y * W + x])) y++;
         for (let j = y0; j < y; j++) vrun[j * W + x] = y - y0;
       } else y++;
     }
   }
   narrowCells = [];
-  for (let i = 0; i < N; i++) if (grid[i] === 'r' && Math.min(hrun[i], vrun[i]) < MIN_STREET) narrowCells.push(i);
+  for (let i = 0; i < N; i++) if ('rb'.includes(grid[i]) && Math.min(hrun[i], vrun[i]) < MIN_STREET) narrowCells.push(i);
   const nw = $('narrow');
-  nw.textContent = narrowCells.length ? `⚠ ${narrowCells.length} case(s) de rue de moins de 3 de large` : 'Aucune rue de moins de 3 cases';
-  nw.className = narrowCells.length ? 'warn' : 'ok';
+  nw.textContent = narrowCells.length ? `${narrowCells.length} case(s) de voie de moins de 3 de large (venelles et ruelles comprises)` : 'Aucune voie de moins de 3 cases';
+  nw.className = 'help';
   requestRender();
 }
 
@@ -688,7 +688,7 @@ window.addEventListener('keydown', e => {
   if (e.key === ' ') { spaceDown = true; canvas.classList.add('pan'); e.preventDefault(); return; }
   if (e.key in legend) { setType(e.key); return; }
   const k = e.key.toLowerCase();
-  if (k === 'b') setTool('pencil'); else if (k === 'e') setTool('rect');
+  if (k === 'c') setTool('pencil'); else if (k === 'e') setTool('rect');
   else if (k === 'g') setTool('bucket'); else if (k === 'm') setTool('monument');
   else if (k === 't') setTool('label'); else if (k === 'h') setTool('pan');
   else if (e.key === '+' || e.key === '=') zoomAt(1.25, canvas.clientWidth / 2, canvas.clientHeight / 2);
