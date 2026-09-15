@@ -118,6 +118,7 @@ def stats(lay, lines):
         "cols": cols, "rows": rows, "total": total,
         "counts": {f"{k} ({legend[k]})": v for k, v in counts.items()},
         "open_share": round(100 * open_cells / total, 1),
+        "open_share_land": round(100 * open_cells / max(1, total - counts.get("w", 0)), 1),
         "open_target": 33.0,
         "narrow_street_cells": len(narrow),
         "monuments": len(lay.get("monuments", [])),
@@ -144,7 +145,7 @@ def main():
         for k, v in st["counts"].items():
             print(f"  {k:12s} {v:6d}  {100*v/st['total']:5.1f} %")
         ok = "OK" if st["open_share"] >= st["open_target"] else "sous l'objectif"
-        print(f"  rues + places + parcs : {st['open_share']} % (objectif ≥ 33 %) → {ok}")
+        print(f"  rues + places + parcs : {st['open_share']} % de la grille, {st['open_share_land']} % hors eau (objectif ≥ 33 %) → {ok}")
         print(f"  cases de rue < 3 de large : {st['narrow_street_cells']}")
         print(f"  monuments : {st['monuments']}, labels : {st['labels']}")
 

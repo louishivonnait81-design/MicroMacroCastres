@@ -68,6 +68,25 @@ MONUMENTS = [            # id, regex sur le nom OSM, (w, h) cases, niveaux
 ]
 OPEN = "rpP"
 TARGET_SHARE = 33.0
+MARGIN_EAST = 16         # cases de marge à l'est du périmètre (DECISIONS.md)
+
+# Décalages explicites, en cases (DECISIONS / fiche 002, corrigés à la main) :
+# - le théâtre est posé au coin sud-ouest de la place : x = place.x + dx,
+#   y = bas de la place + dy (il donne sur la place, façade au nord)
+# - la cathédrale part de sa position OSM, décalée de (dx, dy) pour sortir de
+#   la rue Sabatier, qui se termine sur son parvis
+THEATRE_FROM_PLACE = dict(dx=-4, dy=0)
+MONUMENT_OFFSETS = {"saint-benoit": (0, +6)}
+# - l'Évêché est accolé au sud de la cathédrale, le jardin au sud de l'Évêché
+#   (chaîne nord-sud le long de l'Agout, comme sur le terrain) ; dx = décalage
+#   du bord gauche, dy = espace laissé entre les deux
+EVECHE_FROM_CATHEDRAL = dict(dx=0, dy=0)
+JARDIN_FROM_EVECHE = dict(dx=0, dy=0)
+ALIGN_TOLERANCE = 20     # ° : un élément qui s'écarte de plus que ça des autres est signalé et ignoré
+
+# Rotation de la grille : éléments qui doivent être droits (le cœur) ; les
+# boulevards ont le droit d'être en escalier.
+ALIGN_ON = [r"Place Jean[- ]Jaur[èe]s", r"^Rue Sabatier$", r"^Rue Victor Hugo$"]
 
 COLORS = {"r": (227, 227, 227), "I": (201, 162, 126), "p": (243, 214, 107), "P": (159, 211, 155),
           "w": (142, 193, 230), "q": (220, 205, 176), ".": (255, 255, 255)}
@@ -78,24 +97,101 @@ LEGEND = {"r": "rue", "I": "ilot", "p": "place", "P": "parc", "w": "eau", "q": "
 # Projection périmètre → grille
 # ---------------------------------------------------------------------------
 class Grid:
-    def __init__(self, perim):
-        self.s, self.w, self.n = perim["south"], perim["west"], perim["north"]
-        lat0 = (self.s + self.n) / 2
-        self.kx = 111320 * math.cos(math.radians(lat0))
+    """Grille 106 × 71 posée sur le périmètre, éventuellement tournée de
+    `angle` degrés (sens trigonométrique, nord en haut) autour du centre du
+    périmètre. La marge de MARGIN_EAST cases est à droite (est de la grille)."""
+
+    def __init__(self, perim, angle=0.0):
+        self.s, self.w, self.n, self.e0 = perim["south"], perim["west"], perim["north"], perim["east"]
+        self.clat, self.clon = (self.s + self.n) / 2, (self.w + self.e0) / 2
+        self.kx = 111320 * math.cos(math.radians(self.clat))
         self.ky = 111320
-        h_m = (self.n - self.s) * self.ky
-        self.f = ROWS / h_m                       # cases par mètre
-        self.e = self.w + COLS / self.f / self.kx  # est réel de la grille (marge incluse)
-        self.perim_w_m = (perim["east"] - self.w) * self.kx
-        self.h_m = h_m
+        self.h_m = (self.n - self.s) * self.ky
+        self.perim_w_m = (self.e0 - self.w) * self.kx
+        self.f = ROWS / self.h_m                  # cases par mètre
+        self.angle = angle
+        self.cos, self.sin = math.cos(math.radians(angle)), math.sin(math.radians(angle))
+        self.cx, self.cy = (COLS - MARGIN_EAST) / 2, ROWS / 2   # centre du périmètre dans la grille
+
+    def meters(self, latlon):
+        lat, lon = latlon
+        return ((lon - self.clon) * self.kx, (lat - self.clat) * self.ky)   # est, nord
 
     def cell(self, latlon):
-        """Coordonnées continues en cases (x vers l'est, y vers le sud)."""
-        lat, lon = latlon
-        return ((lon - self.w) * self.kx * self.f, (self.n - lat) * self.ky * self.f)
+        """Coordonnées continues en cases (x vers la droite, y vers le bas)."""
+        mx, my = self.meters(latlon)
+        u = mx * self.cos + my * self.sin
+        v = -mx * self.sin + my * self.cos
+        return (u * self.f + self.cx, -v * self.f + self.cy)
 
     def bbox(self):
-        return (self.s, self.w, self.n, self.e)
+        """bbox géographique (sud, ouest, nord, est) de la grille non tournée."""
+        w = self.clon - self.cx / self.f / self.kx
+        e = w + COLS / self.f / self.kx
+        return (self.s, w, self.n, e)
+
+
+def angle_of_polyline(pts):
+    """Orientation dominante (degrés, modulo 90, dans ]-45, 45]) d'une polyligne
+    en mètres, pondérée par la longueur : moyenne circulaire de 4·φ."""
+    sx = sy = 0.0
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        L = math.hypot(x1 - x0, y1 - y0)
+        if L == 0:
+            continue
+        a = 4 * math.atan2(y1 - y0, x1 - x0)
+        sx += L * math.cos(a); sy += L * math.sin(a)
+    return math.degrees(math.atan2(sy, sx)) / 4 if (sx or sy) else 0.0
+
+
+def mean_angle(angles):
+    sx = sum(math.cos(math.radians(4 * a)) for a in angles)
+    sy = sum(math.sin(math.radians(4 * a)) for a in angles)
+    return math.degrees(math.atan2(sy, sx)) / 4
+
+
+def auto_angle(nodes, ways, g):
+    """Angle qui rend droits les éléments de ALIGN_ON (place : grand axe par
+    ACP des sommets ; rues : orientation pondérée par la longueur)."""
+    found = []
+    for pat in ALIGN_ON:
+        rx = re.compile(pat)
+        pts_all = []
+        for way in ways.values():
+            name = way["tags"].get("name", "")
+            if not rx.search(name):
+                continue
+            pts = [g.meters(nodes[n]) for n in way["nodes"] if n in nodes]
+            if len(pts) >= 2:
+                pts_all.append((name, pts, way["tags"]))
+        if not pts_all:
+            print(f"ATTENTION : rien ne correspond à {pat} pour l'alignement")
+            continue
+        if pat.startswith("Place"):
+            pts = [p for _, ps, _ in pts_all for p in ps]
+            mx = sum(p[0] for p in pts) / len(pts); my = sum(p[1] for p in pts) / len(pts)
+            sxx = sum((p[0] - mx) ** 2 for p in pts); syy = sum((p[1] - my) ** 2 for p in pts)
+            sxy = sum((p[0] - mx) * (p[1] - my) for p in pts)
+            a = math.degrees(0.5 * math.atan2(2 * sxy, sxx - syy))
+        else:
+            a = mean_angle([angle_of_polyline(ps) for _, ps, _ in pts_all if len(ps) >= 2])
+        a = ((a + 45) % 90) - 45
+        found.append((pat, a))
+    # les éléments concordants font la moyenne ; un élément à plus de
+    # ALIGN_TOLERANCE degrés des autres (typiquement à 45°) est exclu et signalé
+    kept = list(found)
+    excluded = []
+    while len(kept) > 1:
+        m = mean_angle([a for _, a in kept])
+        dev = [(abs(((a - m + 45) % 90) - 45), pat, a) for pat, a in kept]
+        worst = max(dev)
+        if worst[0] <= ALIGN_TOLERANCE:
+            break
+        excluded.append((worst[1], worst[2], m))
+        kept = [(pat, a) for pat, a in kept if pat != worst[1]]
+    theta = mean_angle([a for _, a in kept]) if kept else 0.0
+    theta = ((theta + 45) % 90) - 45
+    return theta, found, excluded
 
 
 def inside(x, y):
@@ -235,8 +331,8 @@ def bbox_of(cells):
 # ---------------------------------------------------------------------------
 # Lecture OSM → objets en cases
 # ---------------------------------------------------------------------------
-def collect(osm_path, g):
-    nodes, ways, rels = fond.parse_osm(osm_path)
+def collect(parsed, g):
+    nodes, ways, rels = parsed
     named_re = [re.compile(p) for p in NAMED_STREETS]
 
     def coords(way):
@@ -313,8 +409,7 @@ def centered_rect(cx, cy, w, h):
 # ---------------------------------------------------------------------------
 # Construction du brouillon
 # ---------------------------------------------------------------------------
-def build(osm_path, max_block, verbose=True):
-    g = Grid(PERIM)
+def build(osm_path, max_block, rotate="0", verbose=True):
     log = []
 
     def say(*a):
@@ -323,10 +418,23 @@ def build(osm_path, max_block, verbose=True):
         if verbose:
             print(s)
 
+    parsed = fond.parse_osm(osm_path)
+    g = Grid(PERIM, 0.0)
+    if rotate == "auto":
+        theta, found, excluded = auto_angle(parsed[0], parsed[1], g)
+        for pat, a in found:
+            say(f"orientation de {pat} : {a:+.1f}° (modulo 90)")
+        for pat, a, m in excluded:
+            say(f"ATTENTION : {pat} ({a:+.1f}°) est à {abs(((a - m + 45) % 90) - 45):.0f}° des autres : "
+                f"aucune rotation ne le redresse en même temps qu'eux, il est ignoré")
+        say(f"rotation retenue : {theta:+.2f}° (moyenne des éléments concordants)")
+        g = Grid(PERIM, theta)
+    elif float(rotate) != 0.0:
+        g = Grid(PERIM, float(rotate))
     say(f"facteur de compression : {g.f:.4f} case/m (1 case = {1 / g.f:.1f} m) ; "
         f"périmètre {g.perim_w_m:.0f} × {g.h_m:.0f} m → {g.perim_w_m * g.f:.0f} × {ROWS} cases, "
-        f"marge est {COLS - g.perim_w_m * g.f:.0f} cases")
-    streets, water, parks, place, jardin, features, nodes = collect(osm_path, g)
+        f"marge est {COLS - g.perim_w_m * g.f:.0f} cases ; grille tournée de {g.angle:+.2f}°")
+    streets, water, parks, place, jardin, features, nodes = collect(parsed, g)
     say(f"OSM : {len(streets)} tronçons de rue conservés, {len(water)} polygones d'eau, "
         f"{len(parks)} parcs, place {len(place)} polygone(s), jardin {len(jardin)} polygone(s)")
 
@@ -370,17 +478,22 @@ def build(osm_path, max_block, verbose=True):
     else:
         say("ATTENTION : place Jean-Jaurès introuvable dans l'OSM")
 
-    # 2. rues redressées ; les ponts passent sur l'eau, les autres s'arrêtent à la rive
+    # 2. rues redressées ; les ponts passent sur l'eau, les autres s'arrêtent à la rive.
+    #    Les cases des rues nommées sont mémorisées : aucun monument ne peut les couvrir.
     named_mid = {}
+    named_mask = [[False] * COLS for _ in range(ROWS)]
     for st in streets:
         pts = douglas_peucker(st["pts"], 2.0)
         cells = [(int(round(x)), int(round(y))) for x, y in pts]
         cells = [c for i, c in enumerate(cells) if i == 0 or c != cells[i - 1]]
         allow = None if st["bridge"] else (lambda x, y: grid[y][x] not in "w")
+        is_named = st["name"] and any(re.compile(p).search(st["name"]) for p in NAMED_STREETS[:6])
         for a, b in zip(cells, cells[1:]):
             for p, q in rectify(a, b):
                 stamp_line(grid, p, q, st["w"], "r", allow)
-        if st["name"] and any(re.compile(p).search(st["name"]) for p in NAMED_STREETS[:6]):
+                if is_named:
+                    stamp_line(named_mask, p, q, st["w"], True)
+        if is_named:
             mid = cells[len(cells) // 2]
             named_mid.setdefault(st["name"], []).append(mid)
     for name, mids in named_mid.items():
@@ -402,10 +515,11 @@ def build(osm_path, max_block, verbose=True):
     def overlaps(a, b):
         return a["x"] < b["x"] + b["w"] and b["x"] < a["x"] + a["w"] and a["y"] < b["y"] + b["h"] and b["y"] < a["y"] + a["h"]
 
-    def on_water(r):
-        return any(grid[yy][xx] in "wq" for yy in range(r["y"], r["y"] + r["h"]) for xx in range(r["x"], r["x"] + r["w"]) if inside(xx, yy))
+    def on_water(r, avoid_named=True):
+        return any(grid[yy][xx] in "wq" or (avoid_named and named_mask[yy][xx])
+                   for yy in range(r["y"], r["y"] + r["h"]) for xx in range(r["x"], r["x"] + r["w"]) if inside(xx, yy))
 
-    def settle(r):
+    def settle(r, avoid_named=True):
         """Première position libre en spirale autour de la position réelle."""
         x0, y0 = r["x"], r["y"]
         best = None
@@ -417,27 +531,44 @@ def build(osm_path, max_block, verbose=True):
                 if x < 0 or y < 0 or x + r["w"] > COLS or y + r["h"] > ROWS:
                     continue
                 t = dict(x=x, y=y, w=r["w"], h=r["h"])
-                if not any(overlaps(t, b) for b in placed) and not on_water(t):
+                if not any(overlaps(t, b) for b in placed) and not on_water(t, avoid_named):
                     return t
         return r
 
-    def put(mid_, cx, cy, w, h, ch, levels, name):
+    def put(mid_, cx, cy, w, h, ch, levels, name, avoid_named=True):
         x, y, w, h = centered_rect(cx, cy, w, h)
-        r = settle(dict(x=x, y=y, w=w, h=h))
+        r = settle(dict(x=x, y=y, w=w, h=h), avoid_named)
         fill_rect(grid, r["x"], r["y"], w, h, ch)
         placed.append(r)
         monuments.append(dict(id=mid_, x=r["x"], y=r["y"], w=w, h=h, levels=levels))
         moved = "" if (r["x"], r["y"]) == (x, y) else f", décalé de ({r['x'] - x:+d}, {r['y'] - y:+d})"
         say(f"monument {mid_} ← « {name} » en {r['x']},{r['y']} ({w} × {h}){moved}")
+        return r
 
 
+    boxes = {}
     for mid_, pattern, (w, h), levels in MONUMENTS:
+        if mid_ == "theatre" and place_rect:
+            px, py, pw, ph = place_rect
+            boxes[mid_] = put(mid_, px + THEATRE_FROM_PLACE["dx"] + w / 2, py + ph + THEATRE_FROM_PLACE["dy"] + h / 2, w, h, "I", levels,
+                              f"coin sud-ouest de la place, décalage explicite {THEATRE_FROM_PLACE}", avoid_named=False)
+            continue
+        if mid_ == "eveche" and "saint-benoit" in boxes:
+            cb = boxes["saint-benoit"]
+            boxes[mid_] = put(mid_, cb["x"] + EVECHE_FROM_CATHEDRAL["dx"] + w / 2, cb["y"] + cb["h"] + EVECHE_FROM_CATHEDRAL["dy"] + h / 2,
+                              w, h, "I", levels, f"au sud de la cathédrale, décalage explicite {EVECHE_FROM_CATHEDRAL}")
+            continue
         c, name = feature_center(features, pattern)
         if not c:
             say(f"ATTENTION : monument {mid_} ({pattern}) introuvable")
             continue
-        put(mid_, c[0], c[1], w, h, "I", levels, name)
-    if jardin_c:   # posé après l'Évêché, comme sur le terrain : cathédrale, Évêché, jardin du nord au sud
+        dx, dy = MONUMENT_OFFSETS.get(mid_, (0, 0))
+        boxes[mid_] = put(mid_, c[0] + dx, c[1] + dy, w, h, "I", levels, name + (f", décalage explicite ({dx:+d}, {dy:+d})" if dx or dy else ""))
+    if "eveche" in boxes:   # jardin au sud de l'Évêché : cathédrale, Évêché, jardin du nord au sud
+        eb = boxes["eveche"]
+        put("jardin-eveche", eb["x"] + JARDIN_FROM_EVECHE["dx"] + JARDIN_W / 2, eb["y"] + eb["h"] + JARDIN_FROM_EVECHE["dy"] + JARDIN_H / 2,
+            JARDIN_W, JARDIN_H, "P", 0, f"au sud de l'Évêché, décalage explicite {JARDIN_FROM_EVECHE}")
+    elif jardin_c:
         put("jardin-eveche", jardin_c[0], jardin_c[1], JARDIN_W, JARDIN_H, "P", 0, "Jardin de l'Évêché")
     # ponts : emprise = la rue sur l'eau, d'une rive à l'autre
     for pid, pattern in (("pont-vieux", r"^Pont Vieux"), ("pont-neuf", r"^Pont Neuf")):
@@ -506,6 +637,11 @@ def build(osm_path, max_block, verbose=True):
         n = sum(1 for row in grid for c in row if c in OPEN)
         return 100 * n / (COLS * ROWS)
 
+    def share_land():
+        n = sum(1 for row in grid for c in row if c in OPEN)
+        land = sum(1 for row in grid for c in row if c != "w")
+        return 100 * n / max(1, land)
+
     def cut_blocks(limit):
         cuts = 0
         for _ in range(60):
@@ -547,13 +683,16 @@ def build(osm_path, max_block, verbose=True):
         if s >= TARGET_SHARE or limit <= 6:
             break
         limit -= 2
-    say(f"part rues + places + parcs : {s:.1f} % (objectif ≥ {TARGET_SHARE:.0f} %), îlots ≤ {limit} cases de côté")
+    say(f"part rues + places + parcs : {s:.1f} % de la grille, {share_land():.1f} % hors eau "
+        f"(objectif ≥ {TARGET_SHARE:.0f} %), îlots ≤ {limit} cases de côté, rues intérieures {INNER_W} cases")
 
     layout = dict(cols=COLS, rows=ROWS, cell_cm=1.0, cells="\n".join("".join(r) for r in grid),
                   legend=LEGEND, monuments=monuments, labels=labels,
                   background=dict(x=0, y=0, w=COLS, opacity=0.5, name="fond_castres_grille.png"),
-                  meta=dict(factor=round(g.f, 4), bbox=dict(south=g.s, west=g.w, north=g.n, east=g.e),
-                            max_block=limit, open_share=round(s, 1), source=os.path.basename(osm_path)))
+                  meta=dict(factor=round(g.f, 4), angle=round(g.angle, 2), center=dict(lat=g.clat, lon=g.clon),
+                            bbox=dict(zip(("south", "west", "north", "east"), g.bbox())),
+                            max_block=limit, inner_street=INNER_W, open_share=round(s, 1),
+                            open_share_land=round(share_land(), 1), source=os.path.basename(osm_path)))
     return layout, g, log
 
 
@@ -605,8 +744,9 @@ def preview(layout, path, log, cell=20, margin=70):
         d.rectangle([x - 3, y - 10, x + tw + 3, y + 10], fill=(255, 255, 255))
         d.text((x, y), l["text"], fill=(31, 95, 191), font=small, anchor="lm")
     meta = layout["meta"]
-    d.text((margin, 14), f"MicroMacro-Castres — brouillon 00_osm_to_layout.py — facteur {meta['factor']} case/m "
-           f"(1 case = {1 / meta['factor']:.1f} m) — rues + places + parcs {meta['open_share']} % (objectif ≥ 33 %) — îlots ≤ {meta['max_block']} cases",
+    d.text((margin, 14), f"MicroMacro-Castres — brouillon — grille tournée de {meta['angle']:+.1f}° — facteur {meta['factor']} case/m "
+           f"(1 case = {1 / meta['factor']:.1f} m) — rues + places + parcs {meta['open_share']} % de la grille, "
+           f"{meta['open_share_land']} % hors eau (objectif ≥ 33 %) — îlots ≤ {meta['max_block']}, rues intérieures {meta['inner_street']}",
            fill=(0, 0, 0), font=fond.load_font(22))
     lx = margin
     for c, name in LEGEND.items():
@@ -617,6 +757,32 @@ def preview(layout, path, log, cell=20, margin=70):
     img.save(path)
 
 
+def render_fond(osm_path, out, g, px_per_cell=20):
+    """Fond gris recadré sur la grille ; si la grille est tournée, on rend un
+    carré plus grand, on le tourne autour du centre du périmètre et on recadre."""
+    if abs(g.angle) < 1e-6:
+        fond.render(osm_path, out, g.bbox(), COLS * px_per_cell)
+        return
+    m_per_px = 1 / (g.f * px_per_cell)
+    half = math.hypot(COLS, ROWS) / g.f / 2 * 1.05          # demi-diagonale de la grille, en m
+    big = (g.clat - half / g.ky, g.clon - half / g.kx, g.clat + half / g.ky, g.clon + half / g.kx)
+    tmp = out + ".big.png"
+    fond.render(osm_path, tmp, big, int(round(2 * half / m_per_px)))
+    img = Image.open(tmp).convert("RGB")
+    os.remove(tmp); os.remove(tmp.rsplit(".", 1)[0] + ".json")
+    # PIL tourne dans le sens trigonométrique à l'écran ; la grille est tournée
+    # de +angle dans le monde, donc l'image doit tourner de -angle
+    img = img.rotate(-g.angle, resample=Image.BICUBIC, fillcolor=(255, 255, 255))
+    W, H = img.size
+    cxp, cyp = W / 2, H / 2                                   # centre du périmètre en pixels
+    x0 = cxp - g.cx * px_per_cell; y0 = cyp - g.cy * px_per_cell
+    img = img.crop((int(round(x0)), int(round(y0)), int(round(x0)) + COLS * px_per_cell, int(round(y0)) + ROWS * px_per_cell))
+    img.save(out)
+    with open(out.rsplit(".", 1)[0] + ".json", "w", encoding="utf-8") as f:
+        json.dump(dict(angle=g.angle, center=dict(lat=g.clat, lon=g.clon), px_per_cell=px_per_cell,
+                       m_per_px=round(m_per_px, 4), cols=COLS, rows=ROWS), f, indent=2)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--osm", default="data/castres.osm")
@@ -624,8 +790,9 @@ def main():
     ap.add_argument("--preview", default="out/layout_preview.png")
     ap.add_argument("--fond", default="data/fond_castres_grille.png", help="fond recadré sur la grille ('' pour ne pas le produire)")
     ap.add_argument("--max-block", type=int, default=12)
+    ap.add_argument("--rotate", default="0", help="angle de la grille en degrés, ou 'auto' (place + rue Sabatier + rue Victor Hugo droites)")
     a = ap.parse_args()
-    layout, g, log = build(a.osm, a.max_block)
+    layout, g, log = build(a.osm, a.max_block, a.rotate)
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(layout, f, ensure_ascii=False, indent=1)
@@ -635,8 +802,8 @@ def main():
         preview(layout, a.preview, log)
         print(f"écrit {a.preview}")
     if a.fond:
-        fond.render(a.osm, a.fond, g.bbox(), COLS * 20)
-        print(f"écrit {a.fond} (fond aligné sur la grille : x = 0, y = 0, largeur = {COLS} cases)")
+        render_fond(a.osm, a.fond, g)
+        print(f"écrit {a.fond} (fond aligné sur la grille : x = 0, y = 0, largeur = {COLS} cases, rotation {g.angle:+.2f}°)")
 
 
 if __name__ == "__main__":

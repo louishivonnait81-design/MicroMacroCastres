@@ -2,9 +2,9 @@
   "source": "data/castres.osm",
   "bbox": {
     "south": 43.601,
-    "west": 2.2335,
+    "west": 2.2334731978255324,
     "north": 43.6076,
-    "east": 2.2471075784554126
+    "east": 2.2470807762809453
   },
   "width_px": 2120,
   "height_px": 1420,
