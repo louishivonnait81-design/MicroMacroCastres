@@ -1,18 +1,17 @@
 """
-build_blender.py — Étape 2 du pipeline MicroMacro-Castres.
+02_build_blender.py — Fiche 005 : rendu isométrique de MicroMacro-Castres.
 
-Construit la scène 3D à partir du GeoJSON produit par generalize.py,
-règle une caméra isométrique et Freestyle en ligne claire (noir sur
-blanc, sans ombre), puis rend un PNG et un SVG.
+Construit la scène 3D à partir de data/blocks.json (fiche 004, unités
+« case » : 1 case = 1 unité, 1 niveau = 1 unité), règle une caméra
+isométrique et Freestyle en ligne claire (noir sur blanc, sans ombre),
+puis rend un PNG.
 
-Usage (sans ouvrir Blender) :
-  blender -b -P build_blender.py -- blocks.geojson out/ [largeur_px]
-  ex. : blender -b -P build_blender.py -- blocks.geojson out/ 6000
+Usage (bpy installé comme module Python, ou Blender en ligne de commande) :
+  python3 pipeline/02_build_blender.py data/blocks.json out/ [largeur_px] [orientation] [inclinaison]
+  blender -b -P pipeline/02_build_blender.py -- data/blocks.json out/ 6000 45
 
-Sorties : out/castres.png, out/castres.svg, out/castres.blend
-
-Testé pour Blender 3.6 LTS. Ne dépend d'aucun add-on sauf l'exporteur
-SVG Freestyle livré avec Blender (activé automatiquement).
+Sorties : out/castres.png, out/castres.blend (et out/castres.svg si l'add-on
+d'export SVG Freestyle est disponible).
 """
 
 import bpy
@@ -25,24 +24,29 @@ from mathutils import Vector
 from mathutils.geometry import tessellate_polygon
 
 # ---------------------------------------------------------------------------
-# Paramètres visuels
+# Paramètres visuels (unités : case ; 1 case ≈ 5,9 m, 1 niveau = 1 case)
 # ---------------------------------------------------------------------------
-LEVEL_H = 3.2
-WIN_OFFSET = 0.06          # m : les fenêtres flottent devant la façade
-MIN_WALL_FOR_WINDOW = 2.6  # m
-WIN_PITCH = 2.6            # m entre deux fenêtres
-GABLE_H = 2.4              # m : hauteur du faîtage au-dessus du mur
-TREE_TRUNK_H = 2.0
+LEVEL_H = 1.0
+WIN_OFFSET = 0.02          # les fenêtres flottent devant la façade
+MIN_WALL_FOR_WINDOW = 0.6  # mur plus court : pas de fenêtre
+WIN_PITCH = 0.75           # entre deux fenêtres
+GABLE_H = 0.7              # hauteur du faîtage au-dessus du mur
+PARAPET_H = 0.22           # garde-corps des terrasses
+PARAPET_T = 0.08
+TREE_TRUNK_H = 0.55
 LINE_THICKNESS = 1.4       # px : épaisseur du trait Freestyle
 ISO_TILT = 54.7356         # ° : vraie isométrie (30° sur le papier)
 ISO_TURN = 45.0            # ° : orientation de la carte ; essayer 45 / 135 / 225 / 315
+MAX_Z = 8.0                # hauteur max de la scène (clocher 6 + marge) pour le cadrage
 
 MOTIF = {   # (largeur, hauteur, hauteur d'allège) des fenêtres d'étage
-    "carre": (1.1, 1.1, 1.1),
-    "haute": (0.9, 1.7, 0.8),
-    "vitrine": (0.9, 1.7, 0.8),   # étages ; le rez-de-chaussée est traité à part
-    "arcade": (0.9, 1.7, 0.8),
+    "carre": (0.32, 0.32, 0.36),
+    "haute": (0.26, 0.5, 0.28),
+    "vitrine": (0.26, 0.5, 0.28),   # étages ; le rez-de-chaussée est traité à part
+    "arcade": (0.26, 0.5, 0.28),
 }
+WAVE_L, WAVE_H = 0.45, 0.06   # vaguelettes de l'Agout (longueur, hauteur)
+GROUND_Z = {"water": 0.01, "park": 0.01, "road": 0.02, "place": 0.03, "sidewalk": 0.04}
 
 
 # ---------------------------------------------------------------------------
@@ -106,15 +110,15 @@ def add_flat_polygon(bm, rings, z):
 # ---------------------------------------------------------------------------
 # Bâtiments
 # ---------------------------------------------------------------------------
-def build_volume(bm, rings, h, roof):
-    """Murs + toit. Retourne la liste des murs [(a, b, h)] pour les fenêtres."""
+def build_volume(bm, rings, h, roof, z0=0.0):
+    """Murs + toit entre z0 et z0 + h. Retourne la liste des murs [(a, b, h)] pour les fenêtres."""
     walls = []
     ext = rings[0]
     n = len(ext)
     gable = (roof == "pignon" and n == 4 and len(rings) == 1)
 
-    bottom = add_flat_polygon(bm, rings, 0.0)
-    top = [[bm.verts.new(Vector((v.co.x, v.co.y, h))) for v in ring] for ring in bottom]
+    bottom = add_flat_polygon(bm, rings, z0)
+    top = [[bm.verts.new(Vector((v.co.x, v.co.y, z0 + h))) for v in ring] for ring in bottom]
 
     # murs
     for rb, rt in zip(bottom, top):
@@ -161,6 +165,22 @@ def build_volume(bm, rings, h, roof):
     return walls
 
 
+def add_parapet(bm, rings, h):
+    """Garde-corps d'une terrasse : anneau mince posé sur le toit plat."""
+    ext = rings[0]
+    n = len(ext)
+    if n != 4:
+        return
+    xs, ys = [p[0] for p in ext], [p[1] for p in ext]
+    x0, y0, x1, y1 = min(xs), min(ys), max(xs), max(ys)
+    t = PARAPET_T
+    if x1 - x0 < 4 * t or y1 - y0 < 4 * t:
+        return
+    outer = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    inner = [(x0 + t, y0 + t), (x0 + t, y1 - t), (x1 - t, y1 - t), (x1 - t, y0 + t)]  # sens inverse = trou
+    build_volume(bm, [outer, inner], PARAPET_H, "plat", z0=h)
+
+
 def arch_points(w, h, segs=7):
     """Contour d'une arcade (rectangle + plein cintre) en coordonnées (u, v)."""
     r = w / 2.0
@@ -199,18 +219,21 @@ def add_windows(bm, walls, levels, motif):
         for lvl in range(levels):
             z0 = lvl * LEVEL_H
             if lvl == 0 and motif == "vitrine":
-                w_ = L - 1.2
-                quad((L - w_) / 2, z0 + 0.3, w_, 2.3)
+                # vitrines séparées par des trumeaux, une par ~1 case
+                cols = max(1, int((L - 0.25) // 1.0))
+                vw = (L - 0.25 * (cols + 1)) / cols
+                for c in range(cols):
+                    quad(0.25 + c * (vw + 0.25), z0 + 0.08, vw, 0.72)
                 continue
             if lvl == 0 and motif == "arcade":
-                aw, ah = 1.7, 2.6
-                cols = max(1, int((L - 0.8) // (aw + 0.9)))
+                aw, ah = 0.5, 0.8
+                cols = max(1, int((L - 0.25) // (aw + 0.28)))
                 gap = (L - cols * aw) / (cols + 1)
                 for c in range(cols):
                     u0 = gap + c * (aw + gap) + aw / 2
                     place([(u0 + u, z0 + v) for u, v in arch_points(aw, ah)])
                 continue
-            cols = max(1, int((L - 0.8) // WIN_PITCH))
+            cols = max(1, int((L - 0.25) // WIN_PITCH))
             gap = (L - cols * ww) / (cols + 1)
             for c in range(cols):
                 quad(gap + c * (ww + gap), z0 + sill, ww, wh)
@@ -220,10 +243,11 @@ def add_windows(bm, walls, levels, motif):
 # Arbres, sol, rues
 # ---------------------------------------------------------------------------
 def add_tree(x, y, r, mat, collection):
-    bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=0.25, depth=TREE_TRUNK_H + 0.5,
-                                        location=(x, y, (TREE_TRUNK_H + 0.5) / 2))
+    r = r * 0.6
+    bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=0.07, depth=TREE_TRUNK_H + r,
+                                        location=(x, y, (TREE_TRUNK_H + r) / 2))
     trunk = bpy.context.active_object
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=r, location=(x, y, TREE_TRUNK_H + r * 0.8))
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=r, location=(x, y, TREE_TRUNK_H + r * 0.9))
     crown = bpy.context.active_object
     for ob in (trunk, crown):
         ob.data.materials.append(mat)
@@ -233,17 +257,37 @@ def add_tree(x, y, r, mat, collection):
     crown.name, trunk.name = "Arbre", "Tronc"
 
 
+def add_waves(bm, rings, z):
+    """Vaguelettes : petits traits horizontaux en quinconce dans chaque case d'eau (l'eau est blanche sinon)."""
+    ext = rings[0]
+    xs, ys = [p[0] for p in ext], [p[1] for p in ext]
+    x0, y0, x1, y1 = int(min(xs)), int(min(ys)), int(round(max(xs))), int(round(max(ys)))
+    for cy in range(y0, y1):
+        for cx in range(x0, x1):
+            u = cx + 0.5 + (0.25 if cy % 2 else -0.25)
+            v = cy + 0.5
+            # trait : arête relevée d'une bande très fine (Freestyle la dessine comme un contour)
+            a = bm.verts.new(Vector((u - WAVE_L / 2, v, z)))
+            b = bm.verts.new(Vector((u + WAVE_L / 2, v, z)))
+            c = bm.verts.new(Vector((u + WAVE_L / 2, v, z + WAVE_H)))
+            d = bm.verts.new(Vector((u - WAVE_L / 2, v, z + WAVE_H)))
+            try:
+                bm.faces.new([a, b, c, d])
+            except ValueError:
+                pass
+
+
 # ---------------------------------------------------------------------------
 # Caméra + rendu
 # ---------------------------------------------------------------------------
-def setup_camera(scene, bounds, width_px):
+def setup_camera(scene, bounds, width_px, turn=ISO_TURN, tilt=ISO_TILT):
     x0, y0, x1, y1 = bounds
     center = Vector(((x0 + x1) / 2, (y0 + y1) / 2, 0))
     cam_data = bpy.data.cameras.new("CamIso")
     cam_data.type = "ORTHO"
     cam = bpy.data.objects.new("CamIso", cam_data)
     scene.collection.objects.link(cam)
-    cam.rotation_euler = (math.radians(ISO_TILT), 0.0, math.radians(ISO_TURN))
+    cam.rotation_euler = (math.radians(tilt), 0.0, math.radians(turn))
     direction = cam.rotation_euler.to_matrix() @ Vector((0, 0, -1))
     dist = 3.0 * max(x1 - x0, y1 - y0)
     cam.location = center - direction * dist
@@ -251,12 +295,12 @@ def setup_camera(scene, bounds, width_px):
     scene.camera = cam
     bpy.context.view_layer.update()
 
-    # étendue projetée du périmètre (boîte au sol + 30 m de hauteur)
+    # étendue projetée du périmètre (boîte au sol + MAX_Z de hauteur)
     inv = cam.matrix_world.inverted()
     xs, ys = [], []
     for x in (x0, x1):
         for y in (y0, y1):
-            for z in (0.0, 30.0):
+            for z in (0.0, MAX_Z):
                 p = inv @ Vector((x, y, z))
                 xs.append(p.x)
                 ys.append(p.y)
@@ -271,7 +315,7 @@ def setup_camera(scene, bounds, width_px):
     scene.render.resolution_percentage = 100
 
 
-def setup_render(scene, out_dir):
+def setup_render(scene, out_dir, name="castres"):
     scene.render.engine = "CYCLES"
     scene.cycles.samples = 1
     scene.cycles.use_denoising = False
@@ -322,19 +366,24 @@ def setup_render(scene, out_dir):
 
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGB"
-    scene.render.filepath = os.path.join(out_dir, "castres.png")
+    scene.render.filepath = os.path.join(out_dir, name + ".png")
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    if "--" in sys.argv:
+        argv = sys.argv[sys.argv.index("--") + 1:]
+    else:
+        argv = sys.argv[1:]
     if len(argv) < 2:
-        print("Usage : blender -b -P build_blender.py -- blocks.geojson out/ [largeur_px]")
+        print("Usage : python3 02_build_blender.py blocks.json out/ [largeur_px] [orientation]")
         sys.exit(1)
     geojson_path, out_dir = argv[0], argv[1]
     width_px = int(argv[2]) if len(argv) > 2 else 4000
+    turn = float(argv[3]) if len(argv) > 3 else ISO_TURN
+    tilt = float(argv[4]) if len(argv) > 4 else ISO_TILT
     os.makedirs(out_dir, exist_ok=True)
 
     with open(geojson_path) as f:
@@ -346,8 +395,9 @@ def main():
     col = bpy.data.collections.new("Ville")
     scene.collection.children.link(col)
 
-    bm_vol, bm_win, bm_lm = bmesh.new(), bmesh.new(), bmesh.new()
-    bm_road, bm_side, bm_water, bm_park = bmesh.new(), bmesh.new(), bmesh.new(), bmesh.new()
+    bm_vol, bm_win, bm_lm, bm_par = bmesh.new(), bmesh.new(), bmesh.new(), bmesh.new()
+    bm_ground = {k: bmesh.new() for k in GROUND_Z}
+    bm_waves = bmesh.new()
     counts = {}
 
     for ft in data["features"]:
@@ -357,34 +407,33 @@ def main():
         if geom["type"] == "Point":
             if kind == "tree":
                 x, y = geom["coordinates"]
-                add_tree(x, y, props.get("radius", 3.0), mat, col)
+                add_tree(x, y, props.get("radius", 0.8), mat, col)
             continue
         if geom["type"] != "Polygon":
             continue
         rings = rings_of(geom)
         if not rings:
             continue
-        if kind == "volume":
-            walls = build_volume(bm_vol, rings, props["height"], props.get("roof", "plat"))
+        if kind in ("volume", "landmark"):
+            bm = bm_lm if kind == "landmark" else bm_vol
+            h = float(props.get("height", props.get("levels", 2))) * LEVEL_H
+            roof = props.get("roof", "plat")
+            walls = build_volume(bm, rings, h, "pignon" if roof == "pignon" else "plat")
+            if roof == "terrasse":
+                add_parapet(bm_par, rings, h)
             add_windows(bm_win, walls, props.get("levels", 2), props.get("motif", "carre"))
-        elif kind == "landmark":
-            build_volume(bm_lm, rings, props["height"], "plat")
-        elif kind == "road":
-            add_flat_polygon(bm_road, rings, 0.02)
-        elif kind == "sidewalk_inner":
-            add_flat_polygon(bm_side, rings, 0.04)
-        elif kind == "water":
-            add_flat_polygon(bm_water, rings, 0.01)
-        elif kind == "park":
-            add_flat_polygon(bm_park, rings, 0.01)
+        elif kind in GROUND_Z:
+            add_flat_polygon(bm_ground[kind], rings, GROUND_Z[kind])
+            if kind == "water":
+                add_waves(bm_waves, rings, GROUND_Z[kind])
 
     new_object("Volumes", bm_vol, mat, col)
     new_object("Fenetres", bm_win, mat, col)
     new_object("Monuments", bm_lm, mat, col)
-    new_object("Rues", bm_road, mat, col)
-    new_object("Trottoirs", bm_side, mat, col)
-    new_object("Eau", bm_water, mat, col)
-    new_object("Parcs", bm_park, mat, col)
+    new_object("GardeCorps", bm_par, mat, col)
+    new_object("Vagues", bm_waves, mat, col)
+    for k, bm in bm_ground.items():
+        new_object("Sol_" + k, bm, mat, col)
 
     # sol blanc, bien plus grand que le cadre
     x0, y0, x1, y1 = data["bounds"]
@@ -394,13 +443,14 @@ def main():
     ground.name = "Sol"
     ground.data.materials.append(mat)
 
-    setup_camera(scene, data["bounds"], width_px)
-    setup_render(scene, out_dir)
-    print("Scène :", counts)
+    setup_camera(scene, data["bounds"], width_px, turn, tilt)
+    name = "castres" if (turn, tilt) == (ISO_TURN, ISO_TILT) else "castres_%03d_%02d" % (int(turn), int(tilt))
+    setup_render(scene, out_dir, name)
+    print("Scène :", counts, "| image", scene.render.resolution_x, "×", scene.render.resolution_y, "| orientation", turn, "| inclinaison", tilt)
 
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, "castres.blend"))
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(out_dir, name + ".blend"))
     bpy.ops.render.render(write_still=True)
-    print("Rendu écrit dans", out_dir)
+    print("Rendu écrit dans", scene.render.filepath)
 
 
 if __name__ == "__main__":
