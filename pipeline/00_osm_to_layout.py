@@ -852,7 +852,8 @@ def build(osm_path, rotate=None, core=None, verbose=True):
         return {(x, y) for y in range(ROWS) for x in range(COLS) if layer[y][x] == "X"}
 
     def place_monument(mid_, rings, ch, levels, label, grow=MONUMENT_GROW):
-        F = {c for c in footprint_cells(rings) if grid[c[1]][c[0]] not in "wqp"}
+        # un monument déjà posé n'est jamais recouvert par le suivant (le jardin entoure le palais)
+        F = {c for c in footprint_cells(rings) if grid[c[1]][c[0]] not in "wqp" and not protected[c[1]][c[0]]}
         if not F:
             say(f"ATTENTION : {mid_} ← « {label} » : emprise réelle vide dans la grille")
             return None
@@ -884,7 +885,7 @@ def build(osm_path, rotate=None, core=None, verbose=True):
             ring_ = {}
             for x, y in F | added:
                 for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
-                    if inside(*n) and n not in F and n not in added and grid[n[1]][n[0]] in ".I":
+                    if inside(*n) and n not in F and n not in added and grid[n[1]][n[0]] in ".I" and not protected[n[1]][n[0]]:
                         ring_[n] = ring_.get(n, 0) + 1
             if not ring_:
                 break
