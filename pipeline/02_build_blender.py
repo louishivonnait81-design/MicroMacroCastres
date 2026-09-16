@@ -35,8 +35,9 @@ PARAPET_H = 0.22           # garde-corps des terrasses
 PARAPET_T = 0.08
 TREE_TRUNK_H = 0.55
 LINE_THICKNESS = 1.4       # px : épaisseur du trait Freestyle
-ISO_TILT = 54.7356         # ° : vraie isométrie (30° sur le papier)
-ISO_TURN = 45.0            # ° : orientation de la carte ; essayer 45 / 135 / 225 / 315
+ISO_TILT = 35.0            # ° : hauteur de l'œil, choisie par Louis le 19/09 (54,7356 = isométrie vraie)
+ISO_TURN = 10.0            # ° : orientation de la ville, choisie par Louis le 19/09
+PAPER = 75.0 / 110.0       # feuille 75 × 110 cm portrait : cadre par défaut des rendus
 MAX_Z = 8.0                # hauteur max de la scène (clocher 6 + marge) pour le cadrage
 
 MOTIF = {   # (largeur, hauteur, hauteur d'allège) des fenêtres d'étage
@@ -400,9 +401,9 @@ def main():
     width_px = int(argv[2]) if len(argv) > 2 else 4000
     turn = float(argv[3]) if len(argv) > 3 else ISO_TURN
     tilt = float(argv[4]) if len(argv) > 4 else ISO_TILT
-    paper = None
-    if len(argv) > 5 and argv[5] not in ("libre", "-", ""):
-        paper = float(argv[5])   # largeur / hauteur de la feuille, ex. 75/110 = 0.682
+    paper = PAPER
+    if len(argv) > 5:
+        paper = None if argv[5] in ("libre", "-", "") else float(argv[5])
     os.makedirs(out_dir, exist_ok=True)
 
     with open(geojson_path) as f:

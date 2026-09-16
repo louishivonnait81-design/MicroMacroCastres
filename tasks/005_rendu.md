@@ -28,6 +28,11 @@ Remplissage de la feuille, en pourcentage :
 | 45° | 77 | 68 | 62 | 57 | 51 |
 | 54,7° | 65 | 57 | 52 | 48 | 43 |
 
+## Angle figé (19/09)
+**Orientation 10°, inclinaison 35°**, remplissage 77 % de la feuille. C'est le défaut du script : `python3 pipeline/02_build_blender.py data/blocks.json out/rendu 2000` suffit. Les rendus sont cadrés dans la feuille 75 × 110 portrait ; passer `libre` en 6e argument pour que l'image épouse la ville.
+
+Tirage d'impression : `python3 pipeline/02_build_blender.py data/blocks.json out/rendu 8860` (75 cm à 300 dpi). Régler ensuite `LINE_THICKNESS` à l'œil sur un A4 de détail.
+
 ## Constat (18/09)
 La vraie isométrie (inclinaison 54,7°) écrase la profondeur d'un facteur 0,58 : le plan portrait 71 × 106 donne toujours une **image paysage** (1,6:1 à 45°, 1,3:1 à 20°). Pour remplir une feuille 75 × 110 **portrait**, il faut une vue plus plongeante : à 38° d'inclinaison et 15° d'orientation, l'image est au format 1:1,04 (presque portrait) et ressemble davantage à la carte MicroMacro (façades courtes, toits bien visibles). Trois rendus sont proposés à Louis : 45°/54,7°, 20°/54,7° et 15°/38°.
 

@@ -10,7 +10,7 @@ Un jeu de type MicroMacro : une grande carte isométrique noir et blanc du vieux
 
 - Papier : 75 × 110 cm, **portrait**, comme la carte MicroMacro posée sur la table. Marge de 2 cm avec quadrillage 1–4 (petit côté) / A–G (grand côté).
 - Grille de travail : 1 case = 1 cm papier. Zone dessinée : **71 × 106 cases** (71 colonnes, 106 lignes).
-- Projection : isométrique vraie (angles à 30° sur le papier), orthographique. Orientation `ISO_TURN = 45°` par défaut ; fixée après la fiche 006.
+- Projection : axonométrique orthographique. **Angle figé le 19/09 : orientation 10°, inclinaison 35°** (`ISO_TURN = 10`, `ISO_TILT = 35` dans `pipeline/02_build_blender.py`). L'isométrie vraie (inclinaison 54,7°) a été écartée : elle couche la ville en paysage et ne remplit que 57 % d'une feuille portrait, contre 77 % à 35°. Les rendus sont cadrés par défaut dans la feuille 75 × 110.
 - Trait : noir, une seule épaisseur (1,2–1,5 px à 4000 px de large ; ~0,25 mm au tirage), aucune hachure, aucun aplat, aucune ombre.
 - Fichiers finaux : SVG (calques : squelette, monuments, détails, personnages, cadre) + PNG 300 dpi.
 
